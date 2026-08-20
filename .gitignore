@@ -1,0 +1,25 @@
+# Rust
+/target/
+Cargo.lock
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Maturin build artifacts
+bana-py/bana/*.so
+bana-py/bana/*.pyd
+
+# Android fixture build output (never commit build artifacts)
+tests/fixtures/**/build/
+tests/fixtures/**/.gradle/
+tests/fixtures/**/local.properties
+
+# ابزار ادیتور/سیستم‌عامل، نه بخشی از پروژه
+# Editor/OS clutter, not part of the project
+.DS_Store
+*.swp

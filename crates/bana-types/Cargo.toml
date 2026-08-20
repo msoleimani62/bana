@@ -1,0 +1,11 @@
+[package]
+name = "bana-types"
+description = "Shared, logic-free data types for bana (HostEnvironment, ToolStatus, ProjectFingerprint, ScanReport). Every other bana crate depends on this; it depends on nothing internal."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde.workspace = true

@@ -1,0 +1,22 @@
+[package]
+name = "bana-ffi"
+description = "The sole PyO3 boundary of bana. No other crate knows Python exists; this crate wires every internal crate together and exposes a unified API to bana-py."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lib]
+name = "_bana_ffi"
+crate-type = ["cdylib"]
+
+[dependencies]
+bana-types.workspace = true
+bana-env-scanner = { path = "../bana-env-scanner" }
+bana-toolchain-mgr = { path = "../bana-toolchain-mgr" }
+bana-project-analyzer = { path = "../bana-project-analyzer" }
+bana-build-driver = { path = "../bana-build-driver" }
+bana-output-validator = { path = "../bana-output-validator" }
+anyhow.workspace = true
+pyo3 = { version = "0.22", features = ["extension-module"] }

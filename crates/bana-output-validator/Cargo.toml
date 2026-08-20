@@ -1,0 +1,12 @@
+[package]
+name = "bana-output-validator"
+description = "Validates the final APK/AAB after a build: real native-lib architecture checks, signature verification, and basic manifest sanity — not just checking the file exists."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+bana-types.workspace = true
+thiserror.workspace = true

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "bana"
+version = "0.1.0"
+description = "Build Automation for Native Android — a single command that detects, sets up, and builds Android apps from inside Termux/Kali NetHunter without root."
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "typer>=0.12",
+]
+
+[project.scripts]
+bana = "bana.cli.main:app"
+
+[tool.maturin]
+# ماژول Rust واقع در crates/bana-ffi به‌عنوان بسته‌ی داخلی این پکیج ساخته می‌شود
+# The Rust module in crates/bana-ffi is built as this package's compiled extension
+module-name = "bana._bana_ffi"
+manifest-path = "../crates/bana-ffi/Cargo.toml"

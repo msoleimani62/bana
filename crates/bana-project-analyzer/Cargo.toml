@@ -1,0 +1,13 @@
+[package]
+name = "bana-project-analyzer"
+description = "Detects which registered ProjectScenario (pure Kotlin/Java, hybrid Rust/uniffi, ...) matches a given project root and produces its ProjectFingerprint."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+bana-types.workspace = true
+bana-plugin-api.workspace = true
+thiserror.workspace = true

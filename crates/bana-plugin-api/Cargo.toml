@@ -1,0 +1,11 @@
+[package]
+name = "bana-plugin-api"
+description = "Defines the ProjectScenario trait — the extension point new project scenarios (Flutter, React Native, etc.) implement without ever modifying bana's core crates."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+bana-types.workspace = true
