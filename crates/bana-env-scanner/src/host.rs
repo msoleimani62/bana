@@ -55,20 +55,24 @@ fn detect_host_kind(probe: &dyn EnvProbe) -> HostKind {
         return HostKind::Unknown;
     }
 
-    // نشانه‌ی proot روی اندروید: فایل‌های سیستمی اندروید (build.prop) از طریق
-    // bind-mount در دسترس‌اند، در حالی که os-release توزیع میهمان (کالی) را
-    // نشان می‌دهد.
-    // Sign of proot on Android: Android system files (build.prop) are
-    // reachable via bind-mount, while os-release reports the guest distro
-    // (Kali).
-    let android_bind_mount = probe.path_exists(Path::new("/system/build.prop"));
+    // نشانه‌ی proot روی اندروید: طبق داده‌ی واقعی دستگاه کاربر، مسیر
+    // `/system/build.prop` وجود نداشت (فرض اولیه‌ی اشتباه)، ولی `/termux`
+    // (حتی بدون هیچ مجوزی، چون فقط stat لازم است نه خواندن) و `/sdcard`
+    // به‌طور قابل‌اتکا فقط داخل این نوع chroot دیده می‌شوند.
+    // Sign of proot on Android: per the user's real device data,
+    // `/system/build.prop` did not exist (a wrong initial assumption), but
+    // `/termux` (reliable even with zero permissions, since only stat is
+    // needed, not read) and `/sdcard` are only reliably seen inside this
+    // kind of chroot.
+    let android_proot_signal =
+        probe.path_exists(Path::new("/termux")) || probe.path_exists(Path::new("/sdcard"));
     let os_release = probe.read_to_string(Path::new("/etc/os-release"));
     let is_kali_os_release = os_release
         .as_deref()
         .map(|s| s.to_lowercase().contains("kali"))
         .unwrap_or(false);
 
-    if android_bind_mount && is_kali_os_release {
+    if android_proot_signal && is_kali_os_release {
         return HostKind::KaliNetHunterProot;
     }
 
@@ -160,16 +164,41 @@ mod tests {
     }
 
     #[test]
-    fn detects_kali_nethunter_proot() {
+    fn detects_kali_nethunter_proot_via_termux_dir() {
         let mut probe = MockEnvProbe::default();
-        probe
-            .existing_paths
-            .push(PathBuf::from("/system/build.prop"));
+        probe.existing_paths.push(PathBuf::from("/termux"));
         probe.files.insert(
             PathBuf::from("/etc/os-release"),
             "NAME=\"Kali GNU/Linux\"".to_string(),
         );
         assert_eq!(detect_host_kind(&probe), HostKind::KaliNetHunterProot);
+    }
+
+    #[test]
+    fn detects_kali_nethunter_proot_via_sdcard_dir() {
+        // /sdcard تنها نشانه‌ی موجود است ولی همراه os-release کالی، همچنان
+        // باید کافی باشد — طبق طراحی OR بین دو نشانه.
+        // /sdcard is the only present signal, but combined with Kali
+        // os-release it should still be enough — the two signals are OR'd
+        // by design.
+        let mut probe = MockEnvProbe::default();
+        probe.existing_paths.push(PathBuf::from("/sdcard"));
+        probe.files.insert(
+            PathBuf::from("/etc/os-release"),
+            "NAME=\"Kali GNU/Linux\"".to_string(),
+        );
+        assert_eq!(detect_host_kind(&probe), HostKind::KaliNetHunterProot);
+    }
+
+    #[test]
+    fn android_signal_without_kali_os_release_is_not_proot() {
+        // فقط نشانه‌ی اندروید بدون تأیید os-release کافی نیست — باید هر دو
+        // باشند.
+        // The Android signal alone without os-release confirmation isn't
+        // enough — both signals must agree.
+        let mut probe = MockEnvProbe::default();
+        probe.existing_paths.push(PathBuf::from("/termux"));
+        assert_ne!(detect_host_kind(&probe), HostKind::KaliNetHunterProot);
     }
 
     #[test]
@@ -179,18 +208,6 @@ mod tests {
             .env
             .insert("TERMUX_VERSION".to_string(), "0.118".to_string());
         assert_eq!(detect_host_kind(&probe), HostKind::Termux);
-    }
-
-    #[test]
-    fn android_bind_mount_without_kali_os_release_is_not_proot() {
-        // فقط bind-mount بدون تأیید os-release کافی نیست — باید هر دو باشند.
-        // The bind-mount alone without os-release confirmation isn't enough —
-        // both signals must agree.
-        let mut probe = MockEnvProbe::default();
-        probe
-            .existing_paths
-            .push(PathBuf::from("/system/build.prop"));
-        assert_ne!(detect_host_kind(&probe), HostKind::KaliNetHunterProot);
     }
 
     #[test]

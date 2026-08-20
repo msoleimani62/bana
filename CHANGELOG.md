@@ -10,6 +10,18 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### رفع شد / Fixed
+- heuristic تشخیص `KaliNetHunterProot` بازنویسی شد: نشانه‌ی نامعتبر
+  `/system/build.prop` (که روی دستگاه واقعی کاربر اصلاً وجود نداشت) با دو
+  نشانه‌ی تأییدشده جایگزین شد: `/termux` و `/sdcard`.
+  The `KaliNetHunterProot` detection heuristic was rewritten: the invalid
+  `/system/build.prop` signal (which didn't exist on the user's real
+  device) was replaced with two confirmed signals: `/termux` and `/sdcard`.
+- فارسی داخل رشته‌های خروجی برنامه (`doctor.py`, `help=` در `cli/main.py`)
+  حذف شد — نقض قانون «فارسی فقط داخل کامنت».
+  Persian removed from program output strings (`doctor.py`, `help=` in
+  `cli/main.py`) — a violation of the "Persian only in comments" rule.
+
 ### افزوده شد / Added
 - شروع فاز ۱: تشخیص واقعی `HostEnvironment` در `bana-env-scanner`
   (`crates/bana-env-scanner/src/host.rs`)، پشت انتزاع `EnvProbe` برای

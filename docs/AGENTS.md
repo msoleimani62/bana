@@ -244,4 +244,20 @@ Termux/KaliNetHunterProot/NativeLinux/Windows/MacOs، معماری، systemd
 شد. باقی‌مانده‌ی فاز ۱: `ToolStatus<T>`، اسکن موازی با tokio، و تشخیص واقعی
 JDK/SDK/NDK/AAPT2/Gradle wrapper.
 
+**باگ سوم (پیدا و رفع‌شده — commit `b1d99f7`):** فارسی داخل رشته‌های خروجی
+برنامه (`doctor.py` و `help=` در `cli/main.py`) — نقض صریح قانون «فارسی
+فقط داخل کامنت». همه‌ی رشته‌های کاربرنهایی به انگلیسی اصلاح شدند و بند
+مصداقی به بخش ۶ RULES.md اضافه شد تا این اشتباه تکرار نشود.
+
+**باگ چهارم (پیدا و رفع‌شده — با داده‌ی واقعی از کاربر، بدون هیچ حدسی):**
+روی دستگاه واقعی، `bana doctor` محیط را به‌اشتباه `NativeLinux` تشخیص داد،
+نه `KaliNetHunterProot`. علت تأییدشده: heuristic فعلی فرض می‌کرد نشانه‌ی
+proot روی اندروید وجود `/system/build.prop` است، ولی این مسیر روی این نوع
+Kali NetHunter proot اصلاً وجود ندارد (`/etc/os-release` درست `ID=kali` را
+نشان می‌دهد، پس آن نیمه از heuristic درست بود). خروجی واقعی `ls -la /`
+کاربر دو نشانه‌ی قابل‌اتکا را نشان داد: پوشه‌ی `/termux` (حتی بدون هیچ
+مجوزی قابل‌تشخیص، چون فقط stat لازم است) و `/sdcard`. heuristic با
+`android_proot_signal = path_exists("/termux") || path_exists("/sdcard")`
+بازنویسی شد؛ ۲ تست جدید و ۱ تست منفی اضافه شد (مجموع تست‌های `host.rs`: ۱۰).
+
 فازهای ۲ تا ۱۰: **شروع‌نشده.**
