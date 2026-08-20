@@ -12,7 +12,7 @@
 
 **هدف:** پایه‌ی قابل build (خالی ولی کامپایل‌شونده) برای هر دو زبان.
 
-- [ ] ساخت مخزن `msoleimani62/bana` (باید توسط کاربر روی گیت‌هاب انجام شود)
+- [x] ساخت مخزن `msoleimani62/bana` — https://github.com/msoleimani62/bana
 - [x] Cargo workspace با `workspace.dependencies` مشترک در ریشه
 - [x] کریت `bana-types` (اسکلت، فقط تایپ‌های خالی + derive‌های serde)
 - [x] کریت `bana-env-scanner` (اسکلت، وابسته به `bana-types`)
@@ -224,8 +224,11 @@ NetHunter proot، aarch64) با موفقیت هر ۸ کریت را کامپای�
 permitted` در build روی proot به‌خاطر محدودیت مجوز فایل‌سیستم proot است، نه
 باگ واقعی — قابل نادیده‌گرفتن.
 
-باقی‌مانده‌ی فاز ۰ (غیرمسدودکننده برای فاز ۱): ساخت خودِ مخزن روی گیت‌هاب
-توسط کاربر، و تکمیل fixture واقعی Pure Kotlin.
+باقی‌مانده‌ی فاز ۰ (غیرمسدودکننده برای فاز ۱): تکمیل fixture واقعی Pure
+Kotlin (در فاز ۳/۴ انجام می‌شود).
+
+مخزن ساخته و push شد: https://github.com/msoleimani62/bana (commit
+`57f2440`، تغییرنام به `main`).
 
 فاز ۱ (`env_scanner` واقعی): **آماده‌ی شروع.**
 فازهای ۲ تا ۱۰: **شروع‌نشده.**

@@ -10,6 +10,12 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### افزوده شد / Added
+- مخزن روی گیت‌هاب ساخته و اولین commit (فاز ۰ کامل) push شد:
+  https://github.com/msoleimani62/bana
+  Repository created on GitHub and the first commit (complete Phase 0)
+  pushed: https://github.com/msoleimani62/bana
+
 ### تغییر یافت / Changed
 - دامنه‌ی v1 از «فقط موبایل/proot» به «همه‌ی سیستم‌عامل‌ها (لینوکس، ویندوز،
   مک)» گسترش یافت. معماری از قبل (`HostKind`, `PackageBackend` trait) برای
