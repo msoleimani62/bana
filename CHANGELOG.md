@@ -10,7 +10,36 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### افزوده شد / Added
+- تشخیص واقعی JDK از طریق اجرای `java -version` (پشت `trait CommandRunner`
+  برای تست‌پذیری کامل)، در `crates/bana-env-scanner/src/jdk.rs`. ۳ تست
+  واحد.
+  Real JDK detection via running `java -version` (behind a `CommandRunner`
+  trait for full testability), in `crates/bana-env-scanner/src/jdk.rs`. 3
+  unit tests.
+- اسکن موازی توچین با `tokio::task::JoinSet` در `toolchain.rs`، با
+  `enum ProbeResult` برای یکسان‌سازی پروب‌های ناهمگون (JDK اولین واریانت).
+  Parallel toolchain scanning with `tokio::task::JoinSet` in
+  `toolchain.rs`, using a `ProbeResult` enum to unify heterogeneous probes
+  (JDK is the first variant).
+- `AndroidToolchainReport` و `JdkInfo` به `bana-types` اضافه شدند.
+  `AndroidToolchainReport` and `JdkInfo` added to `bana-types`.
+- تابع `scan_toolchain()` در مرز `bana-ffi` (با یک tokio runtime موقت برای
+  اجرای تابع async از PyO3 sync).
+  `scan_toolchain()` function at the `bana-ffi` boundary (with a throwaway
+  tokio runtime to run the async function from sync PyO3).
+- `bana doctor` حالا گزارش JDK را هم کنار گزارش میزبان نشان می‌دهد.
+  `bana doctor` now shows the JDK report alongside the host report.
+
 ### رفع شد / Fixed
+- باگ سریالایز: واریانت `NotFound` به‌صورت رشته‌ی خام JSON سریالایز می‌شود
+  (نه dict)؛ چک اولیه‌ی پایتون (`"Found" in jdk`) روی این رشته هم به‌اشتباه
+  True برمی‌گرداند چون "Found" زیررشته‌ی "NotFound" است — پیش از رسیدن به
+  کاربر پیدا و رفع شد.
+  Serialization bug: the `NotFound` variant serializes as a plain JSON
+  string (not a dict); the initial Python check (`"Found" in jdk`) wrongly
+  returned True on this string too since "Found" is a substring of
+  "NotFound" — caught and fixed before reaching the user.
 - heuristic تشخیص `KaliNetHunterProot` بازنویسی شد: نشانه‌ی نامعتبر
   `/system/build.prop` (که روی دستگاه واقعی کاربر اصلاً وجود نداشت) با دو
   نشانه‌ی تأییدشده جایگزین شد: `/termux` و `/sdcard`.

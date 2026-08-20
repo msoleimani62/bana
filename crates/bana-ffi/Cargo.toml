@@ -20,4 +20,5 @@ bana-build-driver = { path = "../bana-build-driver" }
 bana-output-validator = { path = "../bana-output-validator" }
 anyhow.workspace = true
 serde_json.workspace = true
+tokio.workspace = true
 pyo3 = { version = "0.22", features = ["extension-module"] }

@@ -39,10 +39,11 @@ def ping() -> None:
 @app.command()
 def doctor() -> None:
     """
-    گزارش کامل و دوستانه‌ی وضعیت میزبان (فاز ۱: فعلاً فقط HostEnvironment؛
-    JDK/SDK/NDK/AAPT2/Gradle در ادامه‌ی همین فاز اضافه می‌شود).
-    Full, friendly host status report (Phase 1: HostEnvironment only for
-    now; JDK/SDK/NDK/AAPT2/Gradle land later in this same phase).
+    گزارش کامل و دوستانه‌ی وضعیت میزبان + توچین (فاز ۱: میزبان کامل، فقط
+    JDK از توچین؛ SDK/NDK/AAPT2/Gradle در ادامه‌ی همین فاز اضافه می‌شود).
+    Full, friendly host + toolchain status report (Phase 1: host complete,
+    JDK only from the toolchain so far; SDK/NDK/AAPT2/Gradle land later in
+    this same phase).
     """
     # نکته‌ی مهم: نام تابع (doctor) و ماژول سرویس هر دو doctor بودند؛ بدون
     # نام مستعار، همین def اسم ماژول سرویس را در namespace سراسری بازنویسی
@@ -52,7 +53,9 @@ def doctor() -> None:
     # service module's name in the global namespace and the call below
     # would fail with AttributeError.
     host = doctor_service.scan_host()
+    toolchain = doctor_service.scan_toolchain()
     typer.echo(doctor_service.render_host_report(host))
+    typer.echo(doctor_service.render_toolchain_report(toolchain))
 
 
 if __name__ == "__main__":

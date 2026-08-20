@@ -63,6 +63,23 @@ pub struct ProjectFingerprint {
     pub confidence: f32,
 }
 
+/// اطلاعات تشخیص‌داده‌شده از یک نصب واقعی JDK.
+/// Detected information from a real JDK installation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JdkInfo {
+    pub version: String,
+}
+
+/// گزارش کامل توچین اندروید؛ در فاز ۱ فقط `jdk` پر می‌شود، بقیه‌ی فیلدها
+/// (sdk، ndk، aapt2، gradle_wrapper) طبق ادامه‌ی چک‌لیست فاز ۱ اضافه می‌شوند.
+/// Full Android toolchain report; only `jdk` is populated in Phase 1 for
+/// now, the rest (sdk, ndk, aapt2, gradle_wrapper) land per the rest of
+/// the Phase 1 checklist.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AndroidToolchainReport {
+    pub jdk: ToolStatus<JdkInfo>,
+}
+
 /// گزارش نهایی اسکن محیط، خروجی نهایی env_scanner برای مصرف لایه‌های بعدی.
 /// Final environment scan report, the output env_scanner hands to later stages.
 #[derive(Debug, Clone, Serialize, Deserialize)]

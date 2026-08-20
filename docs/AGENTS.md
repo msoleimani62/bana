@@ -47,11 +47,16 @@
       NetHunter proot
 - [x] تشخیص `systemd_stubbed` با heuristic (باینری systemd-sysusers موجود
       ولی `/run/systemd/system` غایب)
-- [ ] تعریف عمومی `ToolStatus<T>` (Found / FoundButIncompatible / NotFound /
-      AmbiguousMultiple)
-- [ ] راه‌اندازی اسکن موازی با `tokio::task::JoinSet` (الگوی `healthcheck.rs`
-      بی‌مرز) برای همه‌ی پروب‌های مستقل
-- [ ] پیاده‌سازی تشخیص JDK
+- [x] تعریف عمومی `ToolStatus<T>` (Found / FoundButIncompatible / NotFound /
+      AmbiguousMultiple) — از فاز ۰ در `bana-types` تعریف شده بود
+- [x] راه‌اندازی اسکن موازی با `tokio::task::JoinSet` (الگوی `healthcheck.rs`
+      بی‌مرز) برای همه‌ی پروب‌های مستقل — پیاده‌سازی در
+      `crates/bana-env-scanner/src/toolchain.rs` با `enum ProbeResult` برای
+      یکسان‌سازی نوع بازگشتی پروب‌های ناهمگون
+- [x] پیاده‌سازی تشخیص JDK — `crates/bana-env-scanner/src/jdk.rs`، پشت
+      `trait CommandRunner` برای تست‌پذیری کامل بدون نیاز به وجود واقعی
+      java روی دستگاه تست؛ ۳ تست واحد (نسخه‌ی معتبر، NotFound، خروجی
+      غیرقابل‌تفسیر)
 - [ ] پیاده‌سازی تشخیص Android SDK root + platformها + build-toolsها
 - [ ] پیاده‌سازی تشخیص NDK (گشتن دنبال `source.properties`، نه مسیر ثابت)
 - [ ] پیاده‌سازی تست واقعی AAPT2 (اجرای واقعی + بررسی تطابق معماری باینری با
@@ -64,9 +69,8 @@
 - [ ] تست‌های واحد برای هر تشخیص روی محیط واقعی فعلی (Kali proot + Arch)؛
       تست واحد Windows/macOS حداقل در سطح mock/unit (بدون دستگاه واقعی)
 - [x] دستور `bana doctor` که این گزارش را انسانی و دوستانه نمایش می‌دهد
-      (طبق اصل ۱۲ — قابل‌فهم برای کاربر آماتور) — نسخه‌ی فعلی فقط لایه‌ی
-      `HostEnvironment` را نشان می‌دهد؛ لایه‌ی توچین با بقیه‌ی فاز ۱ اضافه
-      می‌شود
+      (طبق اصل ۱۲ — قابل‌فهم برای کاربر آماتور) — فعلاً میزبان کامل + فقط
+      JDK از توچین؛ بقیه‌ی توچین با ادامه‌ی فاز ۱ اضافه می‌شود
 
 ---
 
@@ -237,12 +241,20 @@ Kotlin (در فاز ۳/۴ انجام می‌شود).
 مخزن ساخته و push شد: https://github.com/msoleimani62/bana (commit
 `57f2440` و `13d45a8`، تغییرنام به `main`).
 
-**فاز ۱: شروع شده.** `HostEnvironment` واقعی پیاده‌سازی شد (تشخیص
+**فاز ۱: در حال پیشرفت.** `HostEnvironment` واقعی کامل شد (تشخیص
 Termux/KaliNetHunterProot/NativeLinux/Windows/MacOs، معماری، systemd
-استاب‌شده)، همراه ۸ تست واحد با `MockEnvProbe` (بدون نیاز به دستگاه واقعی هر
-سیستم‌عامل). دستور `bana doctor` (نسخه‌ی اولیه، فقط لایه‌ی میزبان) اضافه
-شد. باقی‌مانده‌ی فاز ۱: `ToolStatus<T>`، اسکن موازی با tokio، و تشخیص واقعی
-JDK/SDK/NDK/AAPT2/Gradle wrapper.
+استاب‌شده)، همراه ۱۰ تست واحد با `MockEnvProbe`. تشخیص واقعی JDK اضافه شد
+(`crates/bana-env-scanner/src/jdk.rs`، پشت `trait CommandRunner`، ۳ تست
+واحد) و اسکن موازی با `tokio::task::JoinSet` راه‌اندازی شد
+(`toolchain.rs`، با `enum ProbeResult` برای هماهنگ‌سازی پروب‌های ناهمگون).
+دستور `bana doctor` هر دو گزارش (میزبان + JDK) را نمایش می‌دهد. یک باگ
+واقعی (سریالایز `NotFound` به‌صورت رشته‌ی خام، نه dict — چک substring
+اشتباه در پایتون) قبل از رسیدن به کاربر پیدا و رفع شد.
+
+باقی‌مانده‌ی فاز ۱: تشخیص واقعی Android SDK root + platformها + build-tools،
+NDK (با گشتن دنبال `source.properties`)، تست واقعی AAPT2 (شامل تطابق
+معماری باینری)، Gradle wrapper موجود در پروژه، ترکیب همه در
+`AndroidToolchainReport` کامل، و افزودن «آدرس‌دهی دقیق رفع» به هر `Issue`.
 
 **باگ سوم (پیدا و رفع‌شده — commit `b1d99f7`):** فارسی داخل رشته‌های خروجی
 برنامه (`doctor.py` و `help=` در `cli/main.py`) — نقض صریح قانون «فارسی
