@@ -10,6 +10,7 @@
 
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
+use std::sync::Arc;
 
 /// تابع تست ساده که از پایتون قابل فراخوانی است.
 /// Simple test function callable from Python.
@@ -33,19 +34,26 @@ fn scan_host() -> PyResult<String> {
         .map_err(|e| PyRuntimeError::new_err(format!("host scan serialize failed: {e}")))
 }
 
-/// تشخیص واقعی توچین اندروید (فعلاً فقط JDK) و بازگرداندن آن به‌صورت JSON.
-/// چون این تابع async است ولی PyO3 مستقیم async نمی‌پذیرد، یک runtime
-/// موقت و سبک tokio ساخته می‌شود؛ فقط برای همین یک فراخوانی زنده می‌ماند.
+/// تشخیص واقعی توچین اندروید (JDK + SDK) و بازگرداندن آن به‌صورت JSON.
+/// چون تشخیص SDK به `HostKind` وابسته است، اول محیط میزبان تشخیص داده
+/// می‌شود، سپس به اسکن توچین داده می‌شود. چون این تابع async است ولی PyO3
+/// مستقیم async نمی‌پذیرد، یک runtime موقت و سبک tokio ساخته می‌شود؛ فقط
+/// برای همین یک فراخوانی زنده می‌ماند.
 ///
-/// Real Android toolchain detection (JDK only for now), returned as JSON.
-/// Since the underlying function is async but PyO3 doesn't take async
-/// directly, a lightweight, throwaway tokio runtime is built here; it only
-/// lives for this single call.
+/// Real Android toolchain detection (JDK + SDK), returned as JSON. Since
+/// SDK detection depends on `HostKind`, the host environment is detected
+/// first, then handed to the toolchain scan. Since the underlying function
+/// is async but PyO3 doesn't take async directly, a lightweight, throwaway
+/// tokio runtime is built here; it only lives for this single call.
 #[pyfunction]
 fn scan_toolchain() -> PyResult<String> {
+    let probe: Arc<dyn bana_env_scanner::EnvProbe + Send + Sync> =
+        Arc::new(bana_env_scanner::RealEnvProbe);
+    let host = bana_env_scanner::detect_host_environment(probe.as_ref());
+
     let runtime = tokio::runtime::Runtime::new()
         .map_err(|e| PyRuntimeError::new_err(format!("failed to start async runtime: {e}")))?;
-    let report = runtime.block_on(bana_env_scanner::scan_toolchain());
+    let report = runtime.block_on(bana_env_scanner::scan_toolchain(probe, host.kind));
     serde_json::to_string(&report)
         .map_err(|e| PyRuntimeError::new_err(format!("toolchain scan serialize failed: {e}")))
 }

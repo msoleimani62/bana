@@ -73,6 +73,36 @@ def _render_jdk(jdk: Any) -> str:
     return "  JDK         : unrecognized status — please open an issue on GitHub"
 
 
+def _render_sdk(sdk: Any) -> str:
+    """
+    تبدیل ToolStatus<SdkInfo> خام به یک خط خوانا؛ همان نکته‌ی `NotFound`
+    درباره‌ی JDK این‌جا هم صادق است.
+    Turns a raw ToolStatus<SdkInfo> into one readable line; the same
+    `NotFound`-is-a-plain-string note from JDK applies here too.
+    """
+    if sdk == "NotFound":
+        return (
+            "  SDK         : not found. Set ANDROID_HOME to your SDK root, or install "
+            "one (e.g. `apt install android-sdk` on Debian/Kali) and run `bana doctor` again."
+        )
+    if "Found" in sdk:
+        info = sdk["Found"]["info"]
+        platforms = ", ".join(info["installed_platforms"]) or "none"
+        build_tools = ", ".join(info["installed_build_tools"]) or "none"
+        return (
+            f"  SDK         : found at {sdk['Found']['path']}\n"
+            f"                platforms: {platforms}\n"
+            f"                build-tools: {build_tools}"
+        )
+    if "FoundButIncompatible" in sdk:
+        reason = sdk["FoundButIncompatible"]["reason"]
+        return f"  SDK         : found but unusable ({reason})"
+    if "AmbiguousMultiple" in sdk:
+        count = len(sdk["AmbiguousMultiple"]["candidates"])
+        return f"  SDK         : {count} candidate roots found at once, pick one manually for now"
+    return "  SDK         : unrecognized status — please open an issue on GitHub"
+
+
 def render_host_report(host: dict[str, Any]) -> str:
     """
     تبدیل گزارش خام میزبان به متن خوانا و دوستانه برای کاربر آماتور.
@@ -97,7 +127,16 @@ def render_host_report(host: dict[str, Any]) -> str:
 
 def render_toolchain_report(toolchain: dict[str, Any]) -> str:
     """
-    تبدیل گزارش خام توچین به متن خوانا؛ فعلاً فقط خط JDK.
-    Turns the raw toolchain report into readable text; JDK line only for now.
+    تبدیل گزارش خام توچین به متن خوانا؛ فعلاً خط JDK و SDK.
+    Turns the raw toolchain report into readable text; JDK and SDK lines
+    for now.
     """
-    return "\n".join(["", "bana doctor -- toolchain report", "", _render_jdk(toolchain["jdk"])])
+    return "\n".join(
+        [
+            "",
+            "bana doctor -- toolchain report",
+            "",
+            _render_jdk(toolchain["jdk"]),
+            _render_sdk(toolchain["sdk"]),
+        ]
+    )

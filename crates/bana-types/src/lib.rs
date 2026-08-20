@@ -70,14 +70,27 @@ pub struct JdkInfo {
     pub version: String,
 }
 
-/// گزارش کامل توچین اندروید؛ در فاز ۱ فقط `jdk` پر می‌شود، بقیه‌ی فیلدها
-/// (sdk، ndk، aapt2، gradle_wrapper) طبق ادامه‌ی چک‌لیست فاز ۱ اضافه می‌شوند.
-/// Full Android toolchain report; only `jdk` is populated in Phase 1 for
-/// now, the rest (sdk, ndk, aapt2, gradle_wrapper) land per the rest of
-/// the Phase 1 checklist.
+/// اطلاعات تشخیص‌داده‌شده از یک نصب واقعی Android SDK — نام واقعی
+/// پوشه‌های زیرِ platforms/ و build-tools/، نه یک عدد یا مسیر حدسی.
+/// Detected information from a real Android SDK install — the actual
+/// folder names under platforms/ and build-tools/, never a guessed
+/// number or path.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SdkInfo {
+    pub installed_platforms: Vec<String>,
+    pub installed_build_tools: Vec<String>,
+}
+
+/// گزارش کامل توچین اندروید؛ در فاز ۱ فقط `jdk` و `sdk` پر می‌شوند، بقیه‌ی
+/// فیلدها (ndk، aapt2، gradle_wrapper) طبق ادامه‌ی چک‌لیست فاز ۱ اضافه
+/// می‌شوند.
+/// Full Android toolchain report; only `jdk` and `sdk` are populated in
+/// Phase 1 for now, the rest (ndk, aapt2, gradle_wrapper) land per the
+/// rest of the Phase 1 checklist.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AndroidToolchainReport {
     pub jdk: ToolStatus<JdkInfo>,
+    pub sdk: ToolStatus<SdkInfo>,
 }
 
 /// گزارش نهایی اسکن محیط، خروجی نهایی env_scanner برای مصرف لایه‌های بعدی.

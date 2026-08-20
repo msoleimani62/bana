@@ -16,6 +16,11 @@ pub trait EnvProbe {
     fn read_env(&self, key: &str) -> Option<String>;
     fn path_exists(&self, path: &Path) -> bool;
     fn read_to_string(&self, path: &Path) -> Option<String>;
+    /// نام زیرپوشه‌های مستقیم یک مسیر؛ در صورت هر خطا (وجود نداشتن، عدم
+    /// دسترسی) لیست خالی برمی‌گردد، نه panic.
+    /// Names of a path's direct subdirectories; any error (missing, no
+    /// permission) returns an empty list, never a panic.
+    fn list_dir(&self, path: &Path) -> Vec<String>;
 }
 
 /// پیاده‌سازی واقعی `EnvProbe` که مستقیم از سیستم عامل واقعی می‌خواند.
@@ -33,6 +38,18 @@ impl EnvProbe for RealEnvProbe {
 
     fn read_to_string(&self, path: &Path) -> Option<String> {
         std::fs::read_to_string(path).ok()
+    }
+
+    fn list_dir(&self, path: &Path) -> Vec<String> {
+        std::fs::read_dir(path)
+            .map(|entries| {
+                entries
+                    .filter_map(|e| e.ok())
+                    .filter(|e| e.path().is_dir())
+                    .filter_map(|e| e.file_name().into_string().ok())
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 }
 
@@ -149,6 +166,7 @@ mod tests {
         env: HashMap<String, String>,
         existing_paths: Vec<PathBuf>,
         files: HashMap<PathBuf, String>,
+        dirs: HashMap<PathBuf, Vec<String>>,
     }
 
     impl EnvProbe for MockEnvProbe {
@@ -160,6 +178,9 @@ mod tests {
         }
         fn read_to_string(&self, path: &Path) -> Option<String> {
             self.files.get(path).cloned()
+        }
+        fn list_dir(&self, path: &Path) -> Vec<String> {
+            self.dirs.get(path).cloned().unwrap_or_default()
         }
     }
 

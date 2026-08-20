@@ -57,7 +57,11 @@
       `trait CommandRunner` برای تست‌پذیری کامل بدون نیاز به وجود واقعی
       java روی دستگاه تست؛ ۳ تست واحد (نسخه‌ی معتبر، NotFound، خروجی
       غیرقابل‌تفسیر)
-- [ ] پیاده‌سازی تشخیص Android SDK root + platformها + build-toolsها
+- [x] پیاده‌سازی تشخیص Android SDK root + platformها + build-toolsها —
+      `crates/bana-env-scanner/src/sdk.rs`، چند مسیر محتمل بر اساس
+      `HostKind` (env varها اول، بعد مسیرهای رایج هر میزبان)، فقط پس از
+      تأیید ساختار واقعی `platforms/`+`build-tools/` پذیرفته می‌شود؛ ۵ تست
+      واحد
 - [ ] پیاده‌سازی تشخیص NDK (گشتن دنبال `source.properties`، نه مسیر ثابت)
 - [ ] پیاده‌سازی تست واقعی AAPT2 (اجرای واقعی + بررسی تطابق معماری باینری با
       هاست، نه فقط `command -v`)
@@ -251,14 +255,22 @@ Termux/KaliNetHunterProot/NativeLinux/Windows/MacOs، معماری، systemd
 واقعی (سریالایز `NotFound` به‌صورت رشته‌ی خام، نه dict — چک substring
 اشتباه در پایتون) قبل از رسیدن به کاربر پیدا و رفع شد.
 
-باقی‌مانده‌ی فاز ۱: تشخیص واقعی Android SDK root + platformها + build-tools،
-NDK (با گشتن دنبال `source.properties`)، تست واقعی AAPT2 (شامل تطابق
-معماری باینری)، Gradle wrapper موجود در پروژه، ترکیب همه در
-`AndroidToolchainReport` کامل، و افزودن «آدرس‌دهی دقیق رفع» به هر `Issue`.
+**فاز ۱: در حال پیشرفت.** `HostEnvironment` و JDK کامل شدند (بالا مستند
+شده). تشخیص واقعی Android SDK هم اضافه شد
+(`crates/bana-env-scanner/src/sdk.rs`): چند مسیر محتمل بر اساس `HostKind`
+(اول `ANDROID_HOME`/`ANDROID_SDK_ROOT`، بعد مسیرهای رایج هر میزبان)، فقط
+پس از تأیید واقعی وجود `platforms/`+`build-tools/` (و غیرخالی بودنشان)
+پذیرفته می‌شود — هیچ مسیری کورکورانه قبول نمی‌شود. `EnvProbe` با متد
+`list_dir` گسترش یافت. ۵ تست واحد جدید. اسکن موازی (`toolchain.rs`) حالا
+JDK و SDK را هم‌زمان با `tokio::task::JoinSet` انجام می‌دهد؛ چون تشخیص SDK
+به `HostKind` وابسته است، امضای `scan_toolchain` تغییر کرد تا `probe` و
+`host_kind` را از بیرون بگیرد (میزبان یک‌بار در `bana-ffi` تشخیص داده و به
+هر دو `scan_host`/`scan_toolchain` داده می‌شود). `bana doctor` حالا هر سه
+گزارش (میزبان، JDK، SDK) را نشان می‌دهد.
 
-**تأیید روی دستگاه واقعی (commit `23dce1c`):** ۱۳ تست `bana-env-scanner`
-سبز (۱۰ میزبان + ۳ JDK). `bana doctor` هم محیط را درست تشخیص داد هم JDK
-واقعی را پیدا کرد: `found, version 21.0.11-ea`.
+باقی‌مانده‌ی فاز ۱: NDK (با گشتن دنبال `source.properties`)، تست واقعی
+AAPT2 (شامل تطابق معماری باینری)، Gradle wrapper موجود در پروژه، و افزودن
+«آدرس‌دهی دقیق رفع» به هر `Issue`.
 
 **باگ سوم (پیدا و رفع‌شده — commit `b1d99f7`):** فارسی داخل رشته‌های خروجی
 برنامه (`doctor.py` و `help=` در `cli/main.py`) — نقض صریح قانون «فارسی
