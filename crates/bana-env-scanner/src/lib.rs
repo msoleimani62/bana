@@ -11,12 +11,14 @@
 mod command;
 mod host;
 mod jdk;
+mod ndk;
 mod sdk;
 mod toolchain;
 
 pub use command::{CommandOutput, CommandRunner, RealCommandRunner};
 pub use host::{detect_host_environment, EnvProbe, RealEnvProbe};
 pub use jdk::detect_jdk;
+pub use ndk::detect_ndk;
 pub use sdk::detect_sdk;
 pub use toolchain::scan_toolchain;
 

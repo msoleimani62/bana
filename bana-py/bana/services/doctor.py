@@ -125,11 +125,34 @@ def render_host_report(host: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _render_ndk(ndk: Any) -> str:
+    """
+    تبدیل ToolStatus<NdkInfo> خام به یک خط خوانا؛ همان نکته‌ی `NotFound`
+    درباره‌ی JDK/SDK این‌جا هم صادق است.
+    Turns a raw ToolStatus<NdkInfo> into one readable line; the same
+    `NotFound`-is-a-plain-string note from JDK/SDK applies here too.
+    """
+    if ndk == "NotFound":
+        return (
+            "  NDK         : not found. Install one via `sdkmanager --install "
+            '"ndk;26.1.10909125"` (adjust the version as needed) and run `bana doctor` again.'
+        )
+    if "Found" in ndk:
+        return f"  NDK         : found, version {ndk['Found']['info']['version']}"
+    if "FoundButIncompatible" in ndk:
+        reason = ndk["FoundButIncompatible"]["reason"]
+        return f"  NDK         : found but unusable ({reason})"
+    if "AmbiguousMultiple" in ndk:
+        count = len(ndk["AmbiguousMultiple"]["candidates"])
+        return f"  NDK         : {count} versions found at once, pick one manually for now"
+    return "  NDK         : unrecognized status — please open an issue on GitHub"
+
+
 def render_toolchain_report(toolchain: dict[str, Any]) -> str:
     """
-    تبدیل گزارش خام توچین به متن خوانا؛ فعلاً خط JDK و SDK.
-    Turns the raw toolchain report into readable text; JDK and SDK lines
-    for now.
+    تبدیل گزارش خام توچین به متن خوانا؛ فعلاً خط JDK، SDK، و NDK.
+    Turns the raw toolchain report into readable text; JDK, SDK, and NDK
+    lines for now.
     """
     return "\n".join(
         [
@@ -138,5 +161,6 @@ def render_toolchain_report(toolchain: dict[str, Any]) -> str:
             "",
             _render_jdk(toolchain["jdk"]),
             _render_sdk(toolchain["sdk"]),
+            _render_ndk(toolchain["ndk"]),
         ]
     )

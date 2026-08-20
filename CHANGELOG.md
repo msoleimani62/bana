@@ -11,6 +11,18 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- تشخیص واقعی NDK (گشتن دنبال `source.properties`، نه مسیر ثابت) در
+  `crates/bana-env-scanner/src/ndk.rs`: اولویت اول env var صریح، بعد گشتن
+  زیر `ndk/` هر مسیر محتمل SDK؛ فقط `Pkg.Desc = Android NDK` واقعی پذیرفته
+  می‌شود؛ چند نسخه‌ی هم‌زمان → `AmbiguousMultiple`. `NdkInfo` به
+  `bana-types` اضافه شد. ۶ تست واحد.
+  Real NDK detection (searching for `source.properties`, never a fixed
+  path) in `crates/bana-env-scanner/src/ndk.rs`: explicit env var first,
+  then searching under `ndk/` in each candidate SDK path; only a real
+  `Pkg.Desc = Android NDK` is accepted; multiple simultaneous versions →
+  `AmbiguousMultiple`. `NdkInfo` added to `bana-types`. 6 unit tests.
+- `bana doctor` حالا گزارش NDK را هم نشان می‌دهد.
+  `bana doctor` now also shows the NDK report.
 - تشخیص واقعی Android SDK (root + platforms + build-tools) در
   `crates/bana-env-scanner/src/sdk.rs`: چند مسیر محتمل بر اساس `HostKind`
   (env varها اول، بعد مسیرهای رایج هر میزبان)، فقط پس از تأیید واقعی
@@ -32,8 +44,10 @@ release time — per the Phase 10 checklist in AGENTS.md.
   Parallel toolchain scanning with `tokio::task::JoinSet` in
   `toolchain.rs`, using a `ProbeResult` enum to unify heterogeneous probes
   (JDK and SDK).
-- `AndroidToolchainReport` به `bana-types` اضافه شد (شامل `jdk` و `sdk`).
-  `AndroidToolchainReport` added to `bana-types` (includes `jdk` and `sdk`).
+- `AndroidToolchainReport` به `bana-types` اضافه شد (شامل `jdk`، `sdk`،
+  و `ndk`).
+  `AndroidToolchainReport` added to `bana-types` (includes `jdk`, `sdk`,
+  and `ndk`).
 - شروع فاز ۱: تشخیص واقعی `HostEnvironment` در `bana-env-scanner`، پشت
   انتزاع `EnvProbe`. تشخیص Termux، Kali NetHunter proot، لینوکس معمولی،
   ویندوز، macOS، معماری CPU، و systemd استاب‌شده. ۱۰ تست واحد.

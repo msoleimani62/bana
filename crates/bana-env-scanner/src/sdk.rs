@@ -11,10 +11,12 @@ use bana_types::{HostKind, SdkInfo, ToolStatus};
 use std::path::{Path, PathBuf};
 
 /// فهرست مسیرهای محتمل SDK، به ترتیب اولویت: ابتدا env varهای صریح کاربر،
-/// بعد مسیرهای رایج بسته به نوع میزبان.
+/// بعد مسیرهای رایج بسته به نوع میزبان. `pub(crate)` است چون ماژول `ndk`
+/// هم همین مسیرهای پایه را برای پیدا کردن `ndk/` زیر آن‌ها استفاده می‌کند.
 /// Candidate SDK paths, in priority order: explicit user env vars first,
-/// then common paths based on host kind.
-fn candidate_paths(probe: &dyn EnvProbe, host_kind: &HostKind) -> Vec<PathBuf> {
+/// then common paths based on host kind. `pub(crate)` because the `ndk`
+/// module reuses these same base paths to find `ndk/` underneath them.
+pub(crate) fn candidate_paths(probe: &dyn EnvProbe, host_kind: &HostKind) -> Vec<PathBuf> {
     let mut candidates = Vec::new();
 
     if let Some(v) = probe.read_env("ANDROID_HOME") {

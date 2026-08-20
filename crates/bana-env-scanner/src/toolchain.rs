@@ -11,17 +11,19 @@
 use crate::command::{CommandRunner, RealCommandRunner};
 use crate::host::EnvProbe;
 use crate::jdk::detect_jdk;
+use crate::ndk::detect_ndk;
 use crate::sdk::detect_sdk;
-use bana_types::{AndroidToolchainReport, HostKind, JdkInfo, SdkInfo, ToolStatus};
+use bana_types::{AndroidToolchainReport, HostKind, JdkInfo, NdkInfo, SdkInfo, ToolStatus};
 use std::sync::Arc;
 
 enum ProbeResult {
     Jdk(ToolStatus<JdkInfo>),
     Sdk(ToolStatus<SdkInfo>),
-    // پروب‌های بعدی (Ndk, Aapt2, GradleWrapper) طبق چک‌لیست فاز ۱ اینجا
-    // اضافه می‌شوند.
-    // Later probes (Ndk, Aapt2, GradleWrapper) get added here per the rest
-    // of the Phase 1 checklist.
+    Ndk(ToolStatus<NdkInfo>),
+    // پروب‌های بعدی (Aapt2, GradleWrapper) طبق چک‌لیست فاز ۱ اینجا اضافه
+    // می‌شوند.
+    // Later probes (Aapt2, GradleWrapper) get added here per the rest of
+    // the Phase 1 checklist.
 }
 
 /// اسکن کامل و موازی توچین اندروید. `host_kind` باید از قبل توسط
@@ -52,15 +54,23 @@ pub async fn scan_toolchain(
         tasks.spawn_blocking(move || ProbeResult::Sdk(detect_sdk(probe.as_ref(), &host_kind)));
     }
 
+    {
+        let probe = probe.clone();
+        let host_kind = host_kind.clone();
+        tasks.spawn_blocking(move || ProbeResult::Ndk(detect_ndk(probe.as_ref(), &host_kind)));
+    }
+
     let mut report = AndroidToolchainReport {
         jdk: ToolStatus::NotFound,
         sdk: ToolStatus::NotFound,
+        ndk: ToolStatus::NotFound,
     };
 
     while let Some(result) = tasks.join_next().await {
         match result {
             Ok(ProbeResult::Jdk(status)) => report.jdk = status,
             Ok(ProbeResult::Sdk(status)) => report.sdk = status,
+            Ok(ProbeResult::Ndk(status)) => report.ndk = status,
             // پنیک یا لغو یک تسک نباید کل اسکن را متوقف کند؛ فقط همان ابزار
             // NotFound باقی می‌ماند. لاگ دقیق در فازهای بعدی اضافه می‌شود.
             // A panicked or cancelled task shouldn't stop the whole scan;
