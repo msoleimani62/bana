@@ -1,6 +1,5 @@
-# پوشش نازک روی تابع تست Rust؛ بعداً با سرویس‌های واقعی (اسکن، build) پر می‌شود.
-# Thin wrapper over the Rust test function; will fill up with real services
-# (scan, build, ...) as later phases land.
+# پوشش نازک روی تابع تست Rust؛ فقط برای بررسی سلامت زنجیره‌ی ساخت است.
+# Thin wrapper over the Rust test function; only for build-chain health checks.
 
 from bana import _bana_ffi
 

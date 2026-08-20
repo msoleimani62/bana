@@ -3,11 +3,12 @@
 
 import typer
 
+from bana.services import doctor as doctor_service
 from bana.services import wiring
 
 app = typer.Typer(
     name="bana",
-    help="Build Automation for Native Android — یک دستور، صفر درگیری.",
+    help="Build Automation for Native Android.",
 )
 
 
@@ -33,6 +34,25 @@ def ping() -> None:
     Health-checks the Rust↔Python chain; Phase 0 only.
     """
     typer.echo(wiring.ping())
+
+
+@app.command()
+def doctor() -> None:
+    """
+    گزارش کامل و دوستانه‌ی وضعیت میزبان (فاز ۱: فعلاً فقط HostEnvironment؛
+    JDK/SDK/NDK/AAPT2/Gradle در ادامه‌ی همین فاز اضافه می‌شود).
+    Full, friendly host status report (Phase 1: HostEnvironment only for
+    now; JDK/SDK/NDK/AAPT2/Gradle land later in this same phase).
+    """
+    # نکته‌ی مهم: نام تابع (doctor) و ماژول سرویس هر دو doctor بودند؛ بدون
+    # نام مستعار، همین def اسم ماژول سرویس را در namespace سراسری بازنویسی
+    # می‌کرد و فراخوانی زیر با AttributeError شکست می‌خورد.
+    # Important: this function's name and the service module were both
+    # `doctor`; without the alias, this very def would overwrite the
+    # service module's name in the global namespace and the call below
+    # would fail with AttributeError.
+    host = doctor_service.scan_host()
+    typer.echo(doctor_service.render_host_report(host))
 
 
 if __name__ == "__main__":

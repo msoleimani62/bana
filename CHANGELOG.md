@@ -11,6 +11,21 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- شروع فاز ۱: تشخیص واقعی `HostEnvironment` در `bana-env-scanner`
+  (`crates/bana-env-scanner/src/host.rs`)، پشت انتزاع `EnvProbe` برای
+  تست‌پذیری کامل. تشخیص Termux، Kali NetHunter proot (heuristic دو-نشانه‌ای:
+  bind-mount اندروید + os-release کالی)، لینوکس معمولی، ویندوز، macOS،
+  معماری CPU، و systemd استاب‌شده. ۸ تست واحد با `MockEnvProbe`.
+  Phase 1 kickoff: real `HostEnvironment` detection in `bana-env-scanner`,
+  behind the `EnvProbe` abstraction for full testability. Detects Termux,
+  Kali NetHunter proot (two-signal heuristic), native Linux, Windows,
+  macOS, CPU arch, and stubbed systemd. 8 unit tests via `MockEnvProbe`.
+- تابع `scan_host()` در مرز `bana-ffi` که `HostEnvironment` را به‌صورت JSON
+  به پایتون می‌دهد.
+  `scan_host()` function at the `bana-ffi` boundary, handing
+  `HostEnvironment` to Python as JSON.
+- دستور `bana doctor` (نسخه‌ی اولیه): گزارش دوستانه‌ی وضعیت میزبان.
+  `bana doctor` command (initial version): friendly host-status report.
 - مخزن روی گیت‌هاب ساخته و اولین commit (فاز ۰ کامل) push شد:
   https://github.com/msoleimani62/bana
   Repository created on GitHub and the first commit (complete Phase 0)

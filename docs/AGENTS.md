@@ -38,10 +38,15 @@
 
 **هدف:** تشخیص کامل و قابل‌اتکای وضعیت واقعی محیط (بدون هیچ حدسی).
 
-- [ ] تعریف `HostEnvironment` (نوع میزبان، معماری، shell، وضعیت systemd)
-- [ ] گسترش `HostKind` به `Windows`, `MacOs` (علاوه بر Termux/KaliProot/
-      NativeLinux) — انجام شد در `bana-types` فاز ۰؛ منطق تشخیص واقعی هرکدام
-      اینجا اضافه می‌شود
+- [x] تعریف `HostEnvironment` (نوع میزبان، معماری، shell، وضعیت systemd) —
+      پیاده‌سازی کامل در `crates/bana-env-scanner/src/host.rs`، پشت انتزاع
+      `EnvProbe` برای تست‌پذیری کامل بدون نیاز به دستگاه واقعی هر سیستم‌عامل
+- [x] گسترش `HostKind` به `Windows`, `MacOs` — منطق تشخیص واقعی از طریق
+      `cfg!(target_os = ...)` برای ویندوز/مک، و heuristic دو-نشانه‌ای
+      (bind-mount اندروید + os-release کالی) برای تفکیک Termux از Kali
+      NetHunter proot
+- [x] تشخیص `systemd_stubbed` با heuristic (باینری systemd-sysusers موجود
+      ولی `/run/systemd/system` غایب)
 - [ ] تعریف عمومی `ToolStatus<T>` (Found / FoundButIncompatible / NotFound /
       AmbiguousMultiple)
 - [ ] راه‌اندازی اسکن موازی با `tokio::task::JoinSet` (الگوی `healthcheck.rs`
@@ -58,8 +63,10 @@
       دستور نصب دقیق برای backend تشخیص‌داده‌شده) — طبق اصل ۱۱ RULES.md
 - [ ] تست‌های واحد برای هر تشخیص روی محیط واقعی فعلی (Kali proot + Arch)؛
       تست واحد Windows/macOS حداقل در سطح mock/unit (بدون دستگاه واقعی)
-- [ ] دستور `bana doctor` که این گزارش را انسانی و دوستانه نمایش می‌دهد
-      (طبق اصل ۱۲ — قابل‌فهم برای کاربر آماتور)
+- [x] دستور `bana doctor` که این گزارش را انسانی و دوستانه نمایش می‌دهد
+      (طبق اصل ۱۲ — قابل‌فهم برای کاربر آماتور) — نسخه‌ی فعلی فقط لایه‌ی
+      `HostEnvironment` را نشان می‌دهد؛ لایه‌ی توچین با بقیه‌ی فاز ۱ اضافه
+      می‌شود
 
 ---
 
@@ -228,7 +235,13 @@ permitted` در build روی proot به‌خاطر محدودیت مجوز فا�
 Kotlin (در فاز ۳/۴ انجام می‌شود).
 
 مخزن ساخته و push شد: https://github.com/msoleimani62/bana (commit
-`57f2440`، تغییرنام به `main`).
+`57f2440` و `13d45a8`، تغییرنام به `main`).
 
-فاز ۱ (`env_scanner` واقعی): **آماده‌ی شروع.**
+**فاز ۱: شروع شده.** `HostEnvironment` واقعی پیاده‌سازی شد (تشخیص
+Termux/KaliNetHunterProot/NativeLinux/Windows/MacOs، معماری، systemd
+استاب‌شده)، همراه ۸ تست واحد با `MockEnvProbe` (بدون نیاز به دستگاه واقعی هر
+سیستم‌عامل). دستور `bana doctor` (نسخه‌ی اولیه، فقط لایه‌ی میزبان) اضافه
+شد. باقی‌مانده‌ی فاز ۱: `ToolStatus<T>`، اسکن موازی با tokio، و تشخیص واقعی
+JDK/SDK/NDK/AAPT2/Gradle wrapper.
+
 فازهای ۲ تا ۱۰: **شروع‌نشده.**

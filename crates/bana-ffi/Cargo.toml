@@ -19,4 +19,5 @@ bana-project-analyzer = { path = "../bana-project-analyzer" }
 bana-build-driver = { path = "../bana-build-driver" }
 bana-output-validator = { path = "../bana-output-validator" }
 anyhow.workspace = true
+serde_json.workspace = true
 pyo3 = { version = "0.22", features = ["extension-module"] }
