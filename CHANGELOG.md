@@ -11,6 +11,25 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- تشخیص واقعی Gradle wrapper داخل یک پروژه‌ی مشخص در
+  `crates/bana-env-scanner/src/gradle.rs`: چک واقعی سه فایل و پارس واقعی
+  نسخه از `distributionUrl`؛ برخلاف بقیه‌ی پروب‌های فاز ۱، سطح پروژه است
+  نه میزبان، پس عمداً بیرون از `AndroidToolchainReport` نگه داشته شد و از
+  طریق تابع مستقل sync `bana-ffi::scan_gradle_wrapper` در دسترس است.
+  `GradleWrapperInfo` به `bana-types` اضافه شد. ۵ تست واحد. این آخرین قدم
+  فاز ۱ بود — فاز ۱ از نظر پیاده‌سازی هسته‌ای کامل شد.
+  Real Gradle wrapper detection inside a specific project in
+  `crates/bana-env-scanner/src/gradle.rs`: checks three real files and
+  parses the real version from `distributionUrl`; unlike the other Phase 1
+  probes, this one is project-level, not host-level, so it deliberately
+  stays outside `AndroidToolchainReport` and is exposed via a standalone
+  sync `bana-ffi::scan_gradle_wrapper` function. `GradleWrapperInfo` added
+  to `bana-types`. 5 unit tests. This was the last Phase 1 item — Phase 1's
+  core implementation is now complete.
+- `bana doctor` حالا یک گزارش سطح پروژه هم بر اساس مسیر کاری فعلی نشان
+  می‌دهد.
+  `bana doctor` now also shows a project-level report based on the current
+  working directory.
 - تست واقعی AAPT2 (نه فقط `command -v`) در `crates/bana-env-scanner/src/aapt2.rs`:
   خواندن واقعی هدر ELF (`e_machine`) و مقایسه با معماری هاست؛ مسیرهای
   محتمل اول build-tools هر SDK، بعد PATH؛ معماری غلط → `FoundButIncompatible`

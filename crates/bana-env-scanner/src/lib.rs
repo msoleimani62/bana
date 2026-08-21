@@ -10,6 +10,7 @@
 
 mod aapt2;
 mod command;
+mod gradle;
 mod host;
 mod jdk;
 mod ndk;
@@ -18,6 +19,7 @@ mod toolchain;
 
 pub use aapt2::detect_aapt2;
 pub use command::{CommandOutput, CommandRunner, RealCommandRunner};
+pub use gradle::detect_gradle_wrapper;
 pub use host::{detect_host_environment, EnvProbe, RealEnvProbe};
 pub use jdk::detect_jdk;
 pub use ndk::detect_ndk;

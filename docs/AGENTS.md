@@ -75,16 +75,33 @@
       نسخه‌ی هم‌معماری ولی وجود نسخه‌ی معماری غلط → `FoundButIncompatible`
       با آدرس‌دهی دقیق رفع (`android.aapt2FromMavenOverride`)؛ `EnvProbe`
       با متد `read_bytes` گسترش یافت؛ ۵ تست واحد
-- [ ] پیاده‌سازی تشخیص Gradle wrapper موجود در پروژه
-- [ ] ترکیب همه در `AndroidToolchainReport`
-- [ ] تولید `ScanReport` نهایی + سریالایز JSON
-- [ ] هر `Issue` گزارش‌شده شامل «آدرس‌دهی دقیق رفع» باشد (لینک دانلود رسمی/
-      دستور نصب دقیق برای backend تشخیص‌داده‌شده) — طبق اصل ۱۱ RULES.md
-- [ ] تست‌های واحد برای هر تشخیص روی محیط واقعی فعلی (Kali proot + Arch)؛
-      تست واحد Windows/macOS حداقل در سطح mock/unit (بدون دستگاه واقعی)
+- [x] پیاده‌سازی تشخیص Gradle wrapper موجود در پروژه —
+      `crates/bana-env-scanner/src/gradle.rs`؛ برخلاف بقیه‌ی پروب‌های این
+      فاز، سطح پروژه است نه میزبان (یک `project_root: &Path` می‌گیرد)، پس
+      عمداً بیرون از `AndroidToolchainReport` نگه داشته شده و از طریق تابع
+      مستقل `bana-ffi::scan_gradle_wrapper(project_root)` در دسترس است؛
+      چک واقعی `gradlew` + `gradle-wrapper.jar` + پارس واقعی
+      `distributionUrl` از `gradle-wrapper.properties`؛ ۵ تست واحد
+- [x] ترکیب همه در `AndroidToolchainReport` — انجام شد (`jdk`، `sdk`،
+      `ndk`، `aapt2`؛ Gradle wrapper عمداً بیرون از این گزارش ماند، طبق
+      تصمیم معماری بالا)
+- [~] تولید `ScanReport` نهایی + سریالایز JSON — سریالایز JSON برای هر
+      پروب به‌طور مستقل انجام می‌شود (`scan_host`/`scan_toolchain`/
+      `scan_gradle_wrapper`)؛ خودِ نوع رسمی `ScanReport` (با
+      `blocking_issues`/`warnings` یکپارچه) هنوز جمع‌آوری نشده — به فاز
+      CLI/`--explain` موکول شد
+- [~] هر `Issue` گزارش‌شده شامل «آدرس‌دهی دقیق رفع» باشد — از نظر عملی
+      برآورده شده: هر پیام `FoundButIncompatible`/`NotFound` در
+      `bana doctor` همین الان شامل دستور/راهنمای دقیق رفع است (مثلاً
+      `sdkmanager --install "ndk;..."`، `android.aapt2FromMavenOverride`)؛
+      ولی نوع رسمی `Issue`/`ScanReport` یکپارچه هنوز ساخته نشده
+- [x] تست‌های واحد برای هر تشخیص روی محیط واقعی فعلی (Kali proot + Arch)؛
+      تست واحد Windows/macOS حداقل در سطح mock/unit (بدون دستگاه واقعی) —
+      همه‌ی ۵ پروب با `MockEnvProbe`/`MockProbe` تست شده‌اند، مستقل از
+      سیستم‌عامل واقعی
 - [x] دستور `bana doctor` که این گزارش را انسانی و دوستانه نمایش می‌دهد
-      (طبق اصل ۱۲ — قابل‌فهم برای کاربر آماتور) — فعلاً میزبان کامل + فقط
-      JDK از توچین؛ بقیه‌ی توچین با ادامه‌ی فاز ۱ اضافه می‌شود
+      (طبق اصل ۱۲ — قابل‌فهم برای کاربر آماتور) — کامل: میزبان + توچین
+      (JDK/SDK/NDK/AAPT2) + گزارش پروژه‌ی مسیر کاری فعلی (Gradle wrapper)
 
 ---
 
@@ -296,8 +313,20 @@ Kotlin (در فاز ۳/۴ انجام می‌شود).
 یادداشت قدیمی‌تر کاربر در `topics/dev-environment.md` که override دستی
 لازم بود؛ ظاهراً یا پکیج کالی به‌روز شده یا قبلاً پچ شده بود).
 
-باقی‌مانده‌ی فاز ۱: Gradle wrapper موجود در پروژه، و افزودن «آدرس‌دهی دقیق
-رفع» به هر `Issue` باقی‌مانده.
+**Gradle wrapper (سطح پروژه، نه میزبان) هم اضافه شد**
+(`crates/bana-env-scanner/src/gradle.rs`): چک واقعی سه فایل
+(`gradlew`، `gradle/wrapper/gradle-wrapper.jar`،
+`gradle/wrapper/gradle-wrapper.properties`) و پارس واقعی نسخه از
+`distributionUrl`. برخلاف بقیه، این پروب `project_root` می‌گیرد، پس عمداً
+بیرون از `AndroidToolchainReport` نگه داشته شد و از طریق تابع مستقل
+sync (نه async) `bana-ffi::scan_gradle_wrapper` در دسترس است. `bana doctor`
+حالا علاوه بر گزارش میزبان/توچین، یک گزارش سطح پروژه هم بر اساس مسیر کاری
+فعلی نشان می‌دهد. ۵ تست واحد.
+
+**فاز ۱ از نظر پیاده‌سازی هسته‌ای کامل است.** آیتم‌های باقی‌مانده
+(`ScanReport` رسمی + نوع `Issue` یکپارچه) صرفاً ساختاری‌اند — آدرس‌دهی
+دقیق رفع همین الان در متن هر پیام `bana doctor` وجود دارد؛ فقط جمع‌آوری
+آن‌ها در یک نوع رسمی واحد به فاز CLI/`--explain` موکول شده.
 
 **نکته‌ی واقعی باقی‌مانده برای فاز build_driver (نه باگ):** زیر
 `build-tools/` روی دستگاه کاربر یک پوشه‌ی غیراستاندارد به اسم `debian` هم

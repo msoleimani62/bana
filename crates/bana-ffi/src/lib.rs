@@ -62,6 +62,22 @@ fn scan_toolchain() -> PyResult<String> {
         .map_err(|e| PyRuntimeError::new_err(format!("toolchain scan serialize failed: {e}")))
 }
 
+/// تشخیص واقعی Gradle wrapper داخل یک پروژه‌ی مشخص و بازگرداندن آن به‌صورت
+/// JSON. برخلاف `scan_host`/`scan_toolchain`، sync است چون فقط چند فایل
+/// می‌خواند، نیازی به runtime موقت tokio ندارد.
+///
+/// Real Gradle wrapper detection inside a specific project, returned as
+/// JSON. Unlike `scan_host`/`scan_toolchain`, this is sync since it only
+/// reads a few files — no throwaway tokio runtime needed.
+#[pyfunction]
+fn scan_gradle_wrapper(project_root: String) -> PyResult<String> {
+    let probe = bana_env_scanner::RealEnvProbe;
+    let status =
+        bana_env_scanner::detect_gradle_wrapper(&probe, std::path::Path::new(&project_root));
+    serde_json::to_string(&status)
+        .map_err(|e| PyRuntimeError::new_err(format!("gradle wrapper scan serialize failed: {e}")))
+}
+
 /// نقطه‌ی ثبت ماژول پایتون؛ نام باید با [lib].name در Cargo.toml یکی باشد.
 /// Python module entry point; name must match [lib].name in Cargo.toml.
 #[pymodule]
@@ -69,5 +85,6 @@ fn _bana_ffi(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ping, m)?)?;
     m.add_function(wrap_pyfunction!(scan_host, m)?)?;
     m.add_function(wrap_pyfunction!(scan_toolchain, m)?)?;
+    m.add_function(wrap_pyfunction!(scan_gradle_wrapper, m)?)?;
     Ok(())
 }

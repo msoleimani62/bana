@@ -116,6 +116,21 @@ pub struct AndroidToolchainReport {
     pub aapt2: ToolStatus<Aapt2Info>,
 }
 
+/// اطلاعات تشخیص‌داده‌شده از Gradle wrapper داخل یک پروژه‌ی مشخص. برخلاف
+/// JdkInfo/SdkInfo/NdkInfo/Aapt2Info که سطح میزبان‌اند، این یکی سطح پروژه
+/// است — به همین دلیل عمداً بیرون از `AndroidToolchainReport` نگه داشته
+/// شده، دقیقاً همان مرزی که `project_analyzer` (فاز ۳) بهش نیاز دارد.
+/// Detected information about a Gradle wrapper inside a specific project.
+/// Unlike JdkInfo/SdkInfo/NdkInfo/Aapt2Info, which are host-level, this one
+/// is project-level — deliberately kept outside `AndroidToolchainReport`,
+/// exactly the boundary `project_analyzer` (Phase 3) will need.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GradleWrapperInfo {
+    pub gradlew_present: bool,
+    pub wrapper_jar_present: bool,
+    pub distribution_version: String,
+}
+
 /// گزارش نهایی اسکن محیط، خروجی نهایی env_scanner برای مصرف لایه‌های بعدی.
 /// Final environment scan report, the output env_scanner hands to later stages.
 #[derive(Debug, Clone, Serialize, Deserialize)]

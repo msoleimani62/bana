@@ -1,6 +1,8 @@
 # نقطه‌ی ورود CLI؛ دستورات نازک هستند و کار واقعی را به services می‌سپارند.
 # CLI entry point; commands stay thin and delegate real work to services.
 
+from pathlib import Path
+
 import typer
 
 from bana.services import doctor as doctor_service
@@ -39,11 +41,11 @@ def ping() -> None:
 @app.command()
 def doctor() -> None:
     """
-    گزارش کامل و دوستانه‌ی وضعیت میزبان + توچین (فاز ۱: میزبان کامل، فقط
-    JDK از توچین؛ SDK/NDK/AAPT2/Gradle در ادامه‌ی همین فاز اضافه می‌شود).
-    Full, friendly host + toolchain status report (Phase 1: host complete,
-    JDK only from the toolchain so far; SDK/NDK/AAPT2/Gradle land later in
-    this same phase).
+    گزارش کامل و دوستانه‌ی وضعیت میزبان + توچین + پروژه‌ی فعلی (فاز ۱
+    کامل: میزبان، JDK، SDK، NDK، AAPT2، و Gradle wrapper مسیر کاری فعلی).
+    Full, friendly host + toolchain + current-project status report
+    (Phase 1 complete: host, JDK, SDK, NDK, AAPT2, and the Gradle wrapper
+    of the current working directory).
     """
     # نکته‌ی مهم: نام تابع (doctor) و ماژول سرویس هر دو doctor بودند؛ بدون
     # نام مستعار، همین def اسم ماژول سرویس را در namespace سراسری بازنویسی
@@ -56,6 +58,16 @@ def doctor() -> None:
     toolchain = doctor_service.scan_toolchain()
     typer.echo(doctor_service.render_host_report(host))
     typer.echo(doctor_service.render_toolchain_report(toolchain))
+
+    # گزارش سطح پروژه اختیاری است: bana doctor باید بیرون از هر پروژه‌ای
+    # هم بدون خطا کار کند (طبق اصل ۱۲ RULES.md — راهنمایی دوستانه، نه
+    # شکست تیز).
+    # The project-level report is best-effort: bana doctor must still work
+    # cleanly outside any project (per RULES.md principle 12 — friendly
+    # guidance, not a hard crash).
+    project_root = str(Path.cwd())
+    wrapper = doctor_service.scan_gradle_wrapper(project_root)
+    typer.echo(doctor_service.render_project_report(project_root, wrapper))
 
 
 if __name__ == "__main__":

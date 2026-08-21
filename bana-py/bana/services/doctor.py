@@ -1,9 +1,9 @@
-# سرویس bana doctor — فعلاً لایه‌ی HostEnvironment و JDK؛ بقیه‌ی لایه‌ی
-# toolchain (SDK/NDK/AAPT2/Gradle) طبق ادامه‌ی فاز ۱ به همین‌جا اضافه می‌شود.
+# سرویس bana doctor — لایه‌ی میزبان (HostEnvironment)، لایه‌ی توچین کامل
+# (JDK/SDK/NDK/AAPT2)، و لایه‌ی سطح پروژه (Gradle wrapper).
 #
-# The bana doctor service — currently the HostEnvironment and JDK layers;
-# the rest of the toolchain layer (SDK/NDK/AAPT2/Gradle) gets added here as
-# Phase 1 continues.
+# The bana doctor service — the host layer (HostEnvironment), the full
+# toolchain layer (JDK/SDK/NDK/AAPT2), and the project-level layer
+# (Gradle wrapper).
 
 import json
 from typing import Any
@@ -35,11 +35,57 @@ def scan_host() -> dict[str, Any]:
 
 def scan_toolchain() -> dict[str, Any]:
     """
-    فراخوانی تشخیص واقعی توچین (فعلاً فقط JDK) و بازگرداندن آن به‌صورت dict.
-    Calls the real toolchain detection (JDK only for now) and returns it as
-    a dict.
+    فراخوانی تشخیص واقعی توچین (JDK/SDK/NDK/AAPT2) و بازگرداندن آن به‌صورت dict.
+    Calls the real toolchain detection (JDK/SDK/NDK/AAPT2) and returns it
+    as a dict.
     """
     return json.loads(_bana_ffi.scan_toolchain())
+
+
+def scan_gradle_wrapper(project_root: str) -> Any:
+    """
+    فراخوانی تشخیص واقعی Gradle wrapper داخل یک پروژه‌ی مشخص.
+    Calls the real Gradle wrapper detection inside a specific project.
+    """
+    return json.loads(_bana_ffi.scan_gradle_wrapper(project_root))
+
+
+def _render_gradle_wrapper(wrapper: Any) -> str:
+    """
+    تبدیل ToolStatus<GradleWrapperInfo> خام به یک خط خوانا؛ همان نکته‌ی
+    `NotFound` درباره‌ی بقیه این‌جا هم صادق است.
+    Turns a raw ToolStatus<GradleWrapperInfo> into one readable line; the
+    same `NotFound`-is-a-plain-string note from the others applies here too.
+    """
+    if wrapper == "NotFound":
+        return (
+            "  Gradle      : no wrapper found in this directory. Run `gradle wrapper` "
+            "inside your Android project root, or run `bana doctor` from inside one."
+        )
+    if "Found" in wrapper:
+        version = wrapper["Found"]["info"]["distribution_version"]
+        return f"  Gradle      : wrapper found, targets version {version}"
+    if "FoundButIncompatible" in wrapper:
+        reason = wrapper["FoundButIncompatible"]["reason"]
+        return f"  Gradle      : wrapper incomplete ({reason})"
+    if "AmbiguousMultiple" in wrapper:
+        return "  Gradle      : ambiguous wrapper state, please open an issue on GitHub"
+    return "  Gradle      : unrecognized status — please open an issue on GitHub"
+
+
+def render_project_report(project_root: str, wrapper: Any) -> str:
+    """
+    گزارش سطح پروژه (نه میزبان) — فعلاً فقط Gradle wrapper.
+    Project-level (not host-level) report — Gradle wrapper only for now.
+    """
+    return "\n".join(
+        [
+            "",
+            f"bana doctor -- project report ({project_root})",
+            "",
+            _render_gradle_wrapper(wrapper),
+        ]
+    )
 
 
 def _render_jdk(jdk: Any) -> str:
