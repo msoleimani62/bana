@@ -378,4 +378,8 @@ package manager واقعی‌شان (apt در برابر pacman) فرق دارد
 On-Demand Tier، کش content-addressed، پچ AAPT2 (اکنون که تشخیصش در فاز ۱
 آماده است)، و idempotency.
 
+**تأیید روی دستگاه واقعی (commit `5db316e`):** هر ۶ تست جدید
+`bana-toolchain-mgr` سبز؛ ۳۴ تست `bana-env-scanner` هم دست‌نخورده و سبز
+باقی ماندند.
+
 فازهای ۳ تا ۱۰: **شروع‌نشده.**
