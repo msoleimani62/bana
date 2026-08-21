@@ -8,6 +8,7 @@
 //! implemented. The rest of the checklist (SDK/NDK/AAPT2/Gradle) continues
 //! per docs/AGENTS.md.
 
+mod aapt2;
 mod command;
 mod host;
 mod jdk;
@@ -15,6 +16,7 @@ mod ndk;
 mod sdk;
 mod toolchain;
 
+pub use aapt2::detect_aapt2;
 pub use command::{CommandOutput, CommandRunner, RealCommandRunner};
 pub use host::{detect_host_environment, EnvProbe, RealEnvProbe};
 pub use jdk::detect_jdk;

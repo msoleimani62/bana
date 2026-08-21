@@ -68,8 +68,13 @@
       کدام از مسیرهای محتمل SDK؛ فقط `source.properties` با
       `Pkg.Desc = Android NDK` واقعی پذیرفته می‌شود؛ چند نسخه‌ی هم‌زمان
       → `AmbiguousMultiple`؛ ۶ تست واحد
-- [ ] پیاده‌سازی تست واقعی AAPT2 (اجرای واقعی + بررسی تطابق معماری باینری با
-      هاست، نه فقط `command -v`)
+- [x] پیاده‌سازی تست واقعی AAPT2 (اجرای واقعی + بررسی تطابق معماری باینری با
+      هاست، نه فقط `command -v`) — `crates/bana-env-scanner/src/aapt2.rs`؛
+      خواندن واقعی هدر ELF (`e_machine`) و مقایسه با معماری هاست؛ مسیرهای
+      محتمل: اول build-tools هر SDK محتمل، بعد PATH؛ در صورت پیدا نشدن
+      نسخه‌ی هم‌معماری ولی وجود نسخه‌ی معماری غلط → `FoundButIncompatible`
+      با آدرس‌دهی دقیق رفع (`android.aapt2FromMavenOverride`)؛ `EnvProbe`
+      با متد `read_bytes` گسترش یافت؛ ۵ تست واحد
 - [ ] پیاده‌سازی تشخیص Gradle wrapper موجود در پروژه
 - [ ] ترکیب همه در `AndroidToolchainReport`
 - [ ] تولید `ScanReport` نهایی + سریالایز JSON
@@ -250,47 +255,40 @@ Kotlin (در فاز ۳/۴ انجام می‌شود).
 مخزن ساخته و push شد: https://github.com/msoleimani62/bana (commit
 `57f2440` و `13d45a8`، تغییرنام به `main`).
 
-**فاز ۱: در حال پیشرفت.** `HostEnvironment` واقعی کامل شد (تشخیص
-Termux/KaliNetHunterProot/NativeLinux/Windows/MacOs، معماری، systemd
-استاب‌شده)، همراه ۱۰ تست واحد با `MockEnvProbe`. تشخیص واقعی JDK اضافه شد
-(`crates/bana-env-scanner/src/jdk.rs`، پشت `trait CommandRunner`، ۳ تست
-واحد) و اسکن موازی با `tokio::task::JoinSet` راه‌اندازی شد
-(`toolchain.rs`، با `enum ProbeResult` برای هماهنگ‌سازی پروب‌های ناهمگون).
-دستور `bana doctor` هر دو گزارش (میزبان + JDK) را نمایش می‌دهد. یک باگ
-واقعی (سریالایز `NotFound` به‌صورت رشته‌ی خام، نه dict — چک substring
-اشتباه در پایتون) قبل از رسیدن به کاربر پیدا و رفع شد.
+**فاز ۱: در حال پیشرفت.** میزبان، JDK، SDK، NDK، و AAPT2 کامل و همگی روی
+دستگاه واقعی تأیید شده‌اند:
 
-**فاز ۱: در حال پیشرفت.** `HostEnvironment` و JDK کامل شدند (بالا مستند
-شده). تشخیص واقعی Android SDK هم اضافه شد
-(`crates/bana-env-scanner/src/sdk.rs`): چند مسیر محتمل بر اساس `HostKind`
-(اول `ANDROID_HOME`/`ANDROID_SDK_ROOT`، بعد مسیرهای رایج هر میزبان)، فقط
-پس از تأیید واقعی وجود `platforms/`+`build-tools/` (و غیرخالی بودنشان)
-پذیرفته می‌شود — هیچ مسیری کورکورانه قبول نمی‌شود. `EnvProbe` با متد
-`list_dir` گسترش یافت. ۵ تست واحد جدید. اسکن موازی (`toolchain.rs`) حالا
-JDK و SDK را هم‌زمان با `tokio::task::JoinSet` انجام می‌دهد؛ چون تشخیص SDK
-به `HostKind` وابسته است، امضای `scan_toolchain` تغییر کرد تا `probe` و
-`host_kind` را از بیرون بگیرد (میزبان یک‌بار در `bana-ffi` تشخیص داده و به
-هر دو `scan_host`/`scan_toolchain` داده می‌شود). `bana doctor` حالا هر سه
-گزارش (میزبان، JDK، SDK) را نشان می‌دهد.
+- `HostEnvironment`: تشخیص Termux/KaliNetHunterProot/NativeLinux/Windows/
+  MacOs، معماری، systemd استاب‌شده. ۱۰ تست واحد.
+- JDK: اجرای واقعی `java -version` پشت `trait CommandRunner`. ۳ تست واحد.
+- SDK: چند مسیر محتمل بر اساس `HostKind` (اول `ANDROID_HOME`/
+  `ANDROID_SDK_ROOT`، بعد مسیرهای رایج هر میزبان)، فقط پس از تأیید واقعی
+  `platforms/`+`build-tools/` غیرخالی پذیرفته می‌شود. `EnvProbe` با
+  `list_dir` گسترش یافت. ۵ تست واحد.
+- NDK: اولویت اول `ANDROID_NDK_HOME`/`ANDROID_NDK_ROOT`، بعد گشتن زیر
+  `ndk/` هر مسیر محتمل SDK؛ فقط `source.properties` واقعی با
+  `Pkg.Desc = Android NDK` پذیرفته می‌شود؛ چند نسخه‌ی هم‌زمان →
+  `AmbiguousMultiple`. ۶ تست واحد.
+- AAPT2: نه فقط وجود فایل — خواندن واقعی هدر ELF (`e_machine`) و مقایسه با
+  معماری هاست (مشکل شناخته‌شده‌ی خودِ کاربر: aapt2 نصب‌شده از apt کالی
+  گاهی x86_64 است روی هاست aarch64). مسیرهای محتمل: اول build-tools هر
+  SDK محتمل، بعد PATH. فقط معماری غلط پیدا شود → `FoundButIncompatible`
+  همراه آدرس‌دهی دقیق رفع (`android.aapt2FromMavenOverride`، طبق اصل ۱۱
+  RULES.md). `EnvProbe` با `read_bytes` گسترش یافت. ۵ تست واحد.
 
-**فاز ۱: در حال پیشرفت.** میزبان، JDK، و SDK کامل و روی دستگاه واقعی
-تأیید شده‌اند (بالا مستند شده). تشخیص واقعی NDK هم اضافه شد
-(`crates/bana-env-scanner/src/ndk.rs`): اولویت اول `ANDROID_NDK_HOME`/
-`ANDROID_NDK_ROOT`، بعد گشتن زیر `ndk/` هر کدام از مسیرهای محتمل SDK
-(با استفاده‌ی مجدد از `sdk::candidate_paths`)؛ فقط `source.properties`
-واقعی با `Pkg.Desc = Android NDK` پذیرفته می‌شود (نه نام پوشه)؛ چند نسخه‌ی
-هم‌زمان → `AmbiguousMultiple`. ۶ تست واحد جدید. `toolchain.rs` حالا JDK،
-SDK، و NDK را هم‌زمان اسکن می‌کند. `bana doctor` هر چهار گزارش (میزبان،
-JDK، SDK، NDK) را نشان می‌دهد.
+اسکن موازی (`toolchain.rs`) هر پنج پروب را هم‌زمان با `tokio::task::JoinSet`
+انجام می‌دهد؛ امضای `scan_toolchain` برای گرفتن `probe`، `host_kind`، و
+`host_arch` از بیرون تغییر کرد (میزبان یک‌بار در `bana-ffi` تشخیص داده
+می‌شود). `bana doctor` هر پنج گزارش را نشان می‌دهد.
 
-**تأیید روی دستگاه واقعی (commit `595ff9b`):** ۲۴ تست `bana-env-scanner`
-سبز (۱۰ میزبان + ۳ JDK + ۵ SDK + ۶ NDK). `bana doctor` درست `NotFound` را
-برای NDK گزارش داد — منطبق با وضعیت شناخته‌شده‌ی همین دستگاه (طبق سند
-تشخیص اولیه‌ی بی‌مرز: «NDK در مسیر مورد انتظار پیدا نشده»)، پس تأیید درستی
-تشخیص است، نه باگ.
+**تأیید روی دستگاه واقعی تا commit `595ff9b`:** ۲۴ تست `bana-env-scanner`
+سبز (۱۰ میزبان + ۳ JDK + ۵ SDK + ۶ NDK). SDK در `/usr/lib/android-sdk`
+پیدا شد؛ NDK درست `NotFound` گزارش شد (منطبق با وضعیت شناخته‌شده‌ی همین
+دستگاه طبق سند تشخیص اولیه‌ی بی‌مرز). AAPT2 هنوز روی دستگاه تست نشده —
+منتظر نتیجه.
 
-باقی‌مانده‌ی فاز ۱: تست واقعی AAPT2 (شامل تطابق معماری باینری)، Gradle
-wrapper موجود در پروژه، و افزودن «آدرس‌دهی دقیق رفع» به هر `Issue`.
+باقی‌مانده‌ی فاز ۱: Gradle wrapper موجود در پروژه، و افزودن «آدرس‌دهی دقیق
+رفع» به هر `Issue` باقی‌مانده.
 
 **نکته‌ی واقعی باقی‌مانده برای فاز build_driver (نه باگ):** زیر
 `build-tools/` روی دستگاه کاربر یک پوشه‌ی غیراستاندارد به اسم `debian` هم
@@ -304,17 +302,15 @@ wrapper موجود در پروژه، و افزودن «آدرس‌دهی دقی�
 مصداقی به بخش ۶ RULES.md اضافه شد تا این اشتباه تکرار نشود.
 
 **باگ چهارم (پیدا و رفع‌شده — با داده‌ی واقعی از کاربر، بدون هیچ حدسی؛
-commit `e4d783c`):**
-روی دستگاه واقعی، `bana doctor` محیط را به‌اشتباه `NativeLinux` تشخیص داد،
-نه `KaliNetHunterProot`. علت تأییدشده: heuristic فعلی فرض می‌کرد نشانه‌ی
-proot روی اندروید وجود `/system/build.prop` است، ولی این مسیر روی این نوع
-Kali NetHunter proot اصلاً وجود ندارد (`/etc/os-release` درست `ID=kali` را
-نشان می‌دهد، پس آن نیمه از heuristic درست بود). خروجی واقعی `ls -la /`
-کاربر دو نشانه‌ی قابل‌اتکا را نشان داد: پوشه‌ی `/termux` (حتی بدون هیچ
-مجوزی قابل‌تشخیص، چون فقط stat لازم است) و `/sdcard`. heuristic با
+commit `e4d783c`):** روی دستگاه واقعی، `bana doctor` محیط را به‌اشتباه
+`NativeLinux` تشخیص داد، نه `KaliNetHunterProot`. علت تأییدشده: heuristic
+فعلی فرض می‌کرد نشانه‌ی proot روی اندروید وجود `/system/build.prop` است،
+ولی این مسیر روی این نوع Kali NetHunter proot اصلاً وجود ندارد
+(`/etc/os-release` درست `ID=kali` را نشان می‌دهد، پس آن نیمه از heuristic
+درست بود). خروجی واقعی `ls -la /` کاربر دو نشانه‌ی قابل‌اتکا را نشان داد:
+پوشه‌ی `/termux` (حتی بدون هیچ مجوزی قابل‌تشخیص، چون فقط stat لازم است) و
+`/sdcard`. heuristic با
 `android_proot_signal = path_exists("/termux") || path_exists("/sdcard")`
-بازنویسی شد؛ ۲ تست جدید و ۱ تست منفی اضافه شد (مجموع تست‌های `host.rs`: ۱۰،
-همه سبز روی دستگاه واقعی). `bana doctor` روی دستگاه واقعی این‌بار درست
-`Kali NetHunter (inside proot on Android)` را گزارش داد.
+بازنویسی شد.
 
 فازهای ۲ تا ۱۰: **شروع‌نشده.**

@@ -148,11 +148,35 @@ def _render_ndk(ndk: Any) -> str:
     return "  NDK         : unrecognized status — please open an issue on GitHub"
 
 
+def _render_aapt2(aapt2: Any) -> str:
+    """
+    تبدیل ToolStatus<Aapt2Info> خام به یک خط خوانا؛ همان نکته‌ی `NotFound`
+    درباره‌ی بقیه این‌جا هم صادق است.
+    Turns a raw ToolStatus<Aapt2Info> into one readable line; the same
+    `NotFound`-is-a-plain-string note from the others applies here too.
+    """
+    if aapt2 == "NotFound":
+        return (
+            "  AAPT2       : not found. It ships inside SDK build-tools; "
+            "install one via `sdkmanager --install \"build-tools;34.0.0\"` "
+            "and run `bana doctor` again."
+        )
+    if "Found" in aapt2:
+        return f"  AAPT2       : found, version {aapt2['Found']['info']['version']}"
+    if "FoundButIncompatible" in aapt2:
+        reason = aapt2["FoundButIncompatible"]["reason"]
+        return f"  AAPT2       : found but unusable ({reason})"
+    if "AmbiguousMultiple" in aapt2:
+        count = len(aapt2["AmbiguousMultiple"]["candidates"])
+        return f"  AAPT2       : {count} binaries found at once, pick one manually for now"
+    return "  AAPT2       : unrecognized status — please open an issue on GitHub"
+
+
 def render_toolchain_report(toolchain: dict[str, Any]) -> str:
     """
-    تبدیل گزارش خام توچین به متن خوانا؛ فعلاً خط JDK، SDK، و NDK.
-    Turns the raw toolchain report into readable text; JDK, SDK, and NDK
-    lines for now.
+    تبدیل گزارش خام توچین به متن خوانا؛ فعلاً خط JDK، SDK، NDK، و AAPT2.
+    Turns the raw toolchain report into readable text; JDK, SDK, NDK, and
+    AAPT2 lines for now.
     """
     return "\n".join(
         [
@@ -162,5 +186,6 @@ def render_toolchain_report(toolchain: dict[str, Any]) -> str:
             _render_jdk(toolchain["jdk"]),
             _render_sdk(toolchain["sdk"]),
             _render_ndk(toolchain["ndk"]),
+            _render_aapt2(toolchain["aapt2"]),
         ]
     )

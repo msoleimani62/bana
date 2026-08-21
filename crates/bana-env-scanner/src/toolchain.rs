@@ -8,33 +8,37 @@
 //! `ProbeResult` enum bridges them so `JoinSet` can collect everything as
 //! one unified type — adding a new probe just means one new enum variant.
 
+use crate::aapt2::detect_aapt2;
 use crate::command::{CommandRunner, RealCommandRunner};
 use crate::host::EnvProbe;
 use crate::jdk::detect_jdk;
 use crate::ndk::detect_ndk;
 use crate::sdk::detect_sdk;
-use bana_types::{AndroidToolchainReport, HostKind, JdkInfo, NdkInfo, SdkInfo, ToolStatus};
+use bana_types::{
+    Aapt2Info, AndroidToolchainReport, HostArch, HostKind, JdkInfo, NdkInfo, SdkInfo, ToolStatus,
+};
 use std::sync::Arc;
 
 enum ProbeResult {
     Jdk(ToolStatus<JdkInfo>),
     Sdk(ToolStatus<SdkInfo>),
     Ndk(ToolStatus<NdkInfo>),
-    // پروب‌های بعدی (Aapt2, GradleWrapper) طبق چک‌لیست فاز ۱ اینجا اضافه
-    // می‌شوند.
-    // Later probes (Aapt2, GradleWrapper) get added here per the rest of
-    // the Phase 1 checklist.
+    Aapt2(ToolStatus<Aapt2Info>),
+    // پروب بعدی (GradleWrapper) طبق چک‌لیست فاز ۱ اینجا اضافه می‌شود.
+    // The next probe (GradleWrapper) gets added here per the rest of the
+    // Phase 1 checklist.
 }
 
-/// اسکن کامل و موازی توچین اندروید. `host_kind` باید از قبل توسط
-/// `detect_host_environment` تشخیص داده شده باشد، چون تشخیص SDK به آن
-/// وابسته است (مسیرهای پیش‌فرض متفاوت بر اساس میزبان).
-/// Full, parallel Android toolchain scan. `host_kind` must already be
-/// detected via `detect_host_environment`, since SDK detection depends on
-/// it (default paths differ by host).
+/// اسکن کامل و موازی توچین اندروید. `host_kind` و `host_arch` باید از قبل
+/// توسط `detect_host_environment` تشخیص داده شده باشند، چون تشخیص
+/// SDK/NDK/AAPT2 به آن‌ها وابسته است (مسیرهای پیش‌فرض و تطابق معماری).
+/// Full, parallel Android toolchain scan. `host_kind` and `host_arch` must
+/// already be detected via `detect_host_environment`, since SDK/NDK/AAPT2
+/// detection depends on them (default paths and architecture matching).
 pub async fn scan_toolchain(
     probe: Arc<dyn EnvProbe + Send + Sync>,
     host_kind: HostKind,
+    host_arch: HostArch,
 ) -> AndroidToolchainReport {
     let runner: Arc<dyn CommandRunner> = Arc::new(RealCommandRunner);
     let mut tasks = tokio::task::JoinSet::new();
@@ -60,10 +64,26 @@ pub async fn scan_toolchain(
         tasks.spawn_blocking(move || ProbeResult::Ndk(detect_ndk(probe.as_ref(), &host_kind)));
     }
 
+    {
+        let probe = probe.clone();
+        let runner = runner.clone();
+        let host_kind = host_kind.clone();
+        let host_arch = host_arch.clone();
+        tasks.spawn_blocking(move || {
+            ProbeResult::Aapt2(detect_aapt2(
+                probe.as_ref(),
+                runner.as_ref(),
+                &host_kind,
+                &host_arch,
+            ))
+        });
+    }
+
     let mut report = AndroidToolchainReport {
         jdk: ToolStatus::NotFound,
         sdk: ToolStatus::NotFound,
         ndk: ToolStatus::NotFound,
+        aapt2: ToolStatus::NotFound,
     };
 
     while let Some(result) = tasks.join_next().await {
@@ -71,6 +91,7 @@ pub async fn scan_toolchain(
             Ok(ProbeResult::Jdk(status)) => report.jdk = status,
             Ok(ProbeResult::Sdk(status)) => report.sdk = status,
             Ok(ProbeResult::Ndk(status)) => report.ndk = status,
+            Ok(ProbeResult::Aapt2(status)) => report.aapt2 = status,
             // پنیک یا لغو یک تسک نباید کل اسکن را متوقف کند؛ فقط همان ابزار
             // NotFound باقی می‌ماند. لاگ دقیق در فازهای بعدی اضافه می‌شود.
             // A panicked or cancelled task shouldn't stop the whole scan;

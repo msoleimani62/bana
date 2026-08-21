@@ -123,6 +123,9 @@ mod tests {
         fn list_dir(&self, path: &Path) -> Vec<String> {
             self.dirs.get(path).cloned().unwrap_or_default()
         }
+        fn read_bytes(&self, _path: &Path, _max_len: usize) -> Option<Vec<u8>> {
+            None
+        }
     }
 
     const REAL_NDK_PROPS: &str = "Pkg.Desc = Android NDK\nPkg.Revision = 26.1.10909125\n";

@@ -21,6 +21,12 @@ pub trait EnvProbe {
     /// Names of a path's direct subdirectories; any error (missing, no
     /// permission) returns an empty list, never a panic.
     fn list_dir(&self, path: &Path) -> Vec<String>;
+    /// حداکثر `max_len` بایت اول یک فایل را می‌خواند؛ برای تشخیص واقعی
+    /// معماری باینری از روی هدر ELF، بدون نیاز به اجرای خودِ باینری.
+    /// Reads up to the first `max_len` bytes of a file; used to detect a
+    /// binary's real architecture from its ELF header, without needing to
+    /// execute the binary itself.
+    fn read_bytes(&self, path: &Path, max_len: usize) -> Option<Vec<u8>>;
 }
 
 /// پیاده‌سازی واقعی `EnvProbe` که مستقیم از سیستم عامل واقعی می‌خواند.
@@ -50,6 +56,15 @@ impl EnvProbe for RealEnvProbe {
                     .collect()
             })
             .unwrap_or_default()
+    }
+
+    fn read_bytes(&self, path: &Path, max_len: usize) -> Option<Vec<u8>> {
+        use std::io::Read;
+        let mut file = std::fs::File::open(path).ok()?;
+        let mut buf = vec![0u8; max_len];
+        let n = file.read(&mut buf).ok()?;
+        buf.truncate(n);
+        Some(buf)
     }
 }
 
@@ -181,6 +196,9 @@ mod tests {
         }
         fn list_dir(&self, path: &Path) -> Vec<String> {
             self.dirs.get(path).cloned().unwrap_or_default()
+        }
+        fn read_bytes(&self, _path: &Path, _max_len: usize) -> Option<Vec<u8>> {
+            None
         }
     }
 

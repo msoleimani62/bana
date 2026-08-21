@@ -11,6 +11,20 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- تست واقعی AAPT2 (نه فقط `command -v`) در `crates/bana-env-scanner/src/aapt2.rs`:
+  خواندن واقعی هدر ELF (`e_machine`) و مقایسه با معماری هاست؛ مسیرهای
+  محتمل اول build-tools هر SDK، بعد PATH؛ معماری غلط → `FoundButIncompatible`
+  همراه آدرس‌دهی دقیق رفع. `EnvProbe` با `read_bytes` گسترش یافت.
+  `Aapt2Info` به `bana-types` اضافه شد. ۵ تست واحد.
+  Real AAPT2 testing (not just `command -v`) in
+  `crates/bana-env-scanner/src/aapt2.rs`: actually reads the ELF header
+  (`e_machine`) and compares it to the host architecture; candidate paths
+  are SDK build-tools first, then PATH; a wrong-architecture binary
+  becomes `FoundButIncompatible` with precise remediation. `EnvProbe`
+  extended with `read_bytes`. `Aapt2Info` added to `bana-types`. 5 unit
+  tests.
+- `bana doctor` حالا گزارش AAPT2 را هم نشان می‌دهد.
+  `bana doctor` now also shows the AAPT2 report.
 - تشخیص واقعی NDK (گشتن دنبال `source.properties`، نه مسیر ثابت) در
   `crates/bana-env-scanner/src/ndk.rs`: اولویت اول env var صریح، بعد گشتن
   زیر `ndk/` هر مسیر محتمل SDK؛ فقط `Pkg.Desc = Android NDK` واقعی پذیرفته

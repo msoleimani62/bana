@@ -92,17 +92,28 @@ pub struct NdkInfo {
     pub version: String,
 }
 
-/// گزارش کامل توچین اندروید؛ در فاز ۱ فقط `jdk`، `sdk`، و `ndk` پر
-/// می‌شوند، بقیه‌ی فیلدها (aapt2، gradle_wrapper) طبق ادامه‌ی چک‌لیست فاز ۱
-/// اضافه می‌شوند.
-/// Full Android toolchain report; only `jdk`, `sdk`, and `ndk` are
-/// populated in Phase 1 for now, the rest (aapt2, gradle_wrapper) land per
-/// the rest of the Phase 1 checklist.
+/// اطلاعات تشخیص‌داده‌شده از یک باینری واقعی AAPT2 — شامل این‌که آیا
+/// معماری باینری با معماری هاست تطابق دارد یا نه.
+/// Detected information from a real AAPT2 binary — including whether the
+/// binary's architecture matches the host's.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Aapt2Info {
+    pub version: String,
+    pub arch_mismatch: bool,
+}
+
+/// گزارش کامل توچین اندروید؛ در فاز ۱ فقط `jdk`، `sdk`، `ndk`، و `aapt2`
+/// پر می‌شوند، فیلد باقی‌مانده (gradle_wrapper) طبق ادامه‌ی چک‌لیست فاز ۱
+/// اضافه می‌شود.
+/// Full Android toolchain report; only `jdk`, `sdk`, `ndk`, and `aapt2`
+/// are populated in Phase 1 for now, the remaining field
+/// (gradle_wrapper) lands per the rest of the Phase 1 checklist.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AndroidToolchainReport {
     pub jdk: ToolStatus<JdkInfo>,
     pub sdk: ToolStatus<SdkInfo>,
     pub ndk: ToolStatus<NdkInfo>,
+    pub aapt2: ToolStatus<Aapt2Info>,
 }
 
 /// گزارش نهایی اسکن محیط، خروجی نهایی env_scanner برای مصرف لایه‌های بعدی.

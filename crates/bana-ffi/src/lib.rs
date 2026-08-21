@@ -53,7 +53,11 @@ fn scan_toolchain() -> PyResult<String> {
 
     let runtime = tokio::runtime::Runtime::new()
         .map_err(|e| PyRuntimeError::new_err(format!("failed to start async runtime: {e}")))?;
-    let report = runtime.block_on(bana_env_scanner::scan_toolchain(probe, host.kind));
+    let report = runtime.block_on(bana_env_scanner::scan_toolchain(
+        probe,
+        host.kind,
+        host.arch,
+    ));
     serde_json::to_string(&report)
         .map_err(|e| PyRuntimeError::new_err(format!("toolchain scan serialize failed: {e}")))
 }
