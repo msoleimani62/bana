@@ -11,6 +11,22 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- شروع فاز ۲: trait `PackageBackend` و ۶ پیاده‌سازی (`AptBackend`,
+  `PacmanBackend`, `TermuxPkgBackend`, `WingetBackend`, `ChocoBackend`,
+  `HomebrewBackend`) در `crates/bana-toolchain-mgr/src/backend.rs`، طبق
+  بند ۵.۱ RULES.md. انتخاب backend بر اساس `is_available` واقعی، نه فرض
+  از روی `HostKind` (پوشش سناریوی Kali proot در برابر Arch لپ‌تاپ کاربر
+  که هر دو خانواده‌ی «لینوکس معمولی»اند ولی package manager متفاوت دارند).
+  `ToolchainError` typed (thiserror) اضافه شد. ۶ تست واحد با `MockRunner`.
+  Phase 2 kickoff: the `PackageBackend` trait and 6 implementations
+  (`AptBackend`, `PacmanBackend`, `TermuxPkgBackend`, `WingetBackend`,
+  `ChocoBackend`, `HomebrewBackend`) in
+  `crates/bana-toolchain-mgr/src/backend.rs`, per RULES.md section 5.1.
+  Backend selection is based on real `is_available` checks, never assumed
+  from `HostKind` alone (covers the Kali-proot-vs-Arch-laptop scenario,
+  where both are "native Linux" family but use different package
+  managers). Typed `ToolchainError` (thiserror) added. 6 unit tests with
+  `MockRunner`.
 - تشخیص واقعی Gradle wrapper داخل یک پروژه‌ی مشخص در
   `crates/bana-env-scanner/src/gradle.rs`: چک واقعی سه فایل و پارس واقعی
   نسخه از `distributionUrl`؛ برخلاف بقیه‌ی پروب‌های فاز ۱، سطح پروژه است

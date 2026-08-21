@@ -9,6 +9,7 @@ authors.workspace = true
 
 [dependencies]
 bana-types.workspace = true
+bana-env-scanner = { path = "../bana-env-scanner" }
 tokio.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

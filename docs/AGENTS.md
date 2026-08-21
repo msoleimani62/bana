@@ -110,12 +110,16 @@
 **هدف:** فراهم‌کردن/پچ‌کردن ابزارهای گمشده، بدون حدس.
 
 - [ ] تعریف لایه‌ی Bundled Tier (چه چیزهایی، چه نسخه‌هایی — طبق بخش ۵ قانون)
-- [ ] تعریف trait `PackageBackend` و پیاده‌سازی‌های v1: `TermuxPkgBackend`,
+- [x] تعریف trait `PackageBackend` و پیاده‌سازی‌های v1: `TermuxPkgBackend`,
       `AptBackend`, `PacmanBackend` (طبق بخش ۵.۱ RULES.md — هیچ فراخوانی
-      مستقیم pkg/apt/pacman خارج از این پیاده‌سازی‌ها مجاز نیست)
-- [ ] پیاده‌سازی‌های چندسکویی: `WingetBackend`/`ChocoBackend` (ویندوز),
+      مستقیم pkg/apt/pacman خارج از این پیاده‌سازی‌ها مجاز نیست) —
+      `crates/bana-toolchain-mgr/src/backend.rs`؛ انتخاب backend بر اساس
+      `is_available` واقعی (نه فرض از روی HostKind)، چون هم گوشی هم لپ‌تاپ
+      آرچ کاربر می‌توانند خانواده‌ی «لینوکس معمولی» باشند ولی package
+      manager واقعی‌شان فرق دارد؛ ۶ تست واحد با `MockRunner`
+- [x] پیاده‌سازی‌های چندسکویی: `WingetBackend`/`ChocoBackend` (ویندوز),
       `HomebrewBackend` (macOS) — همان الگوی trait، بدون تغییر در بقیه‌ی
-      toolchain_mgr
+      toolchain_mgr — انجام شد همراه بند بالا
 - [ ] منطق نصب لایه‌ی پایه هنگام `bana setup`
 - [ ] منطق فراهم‌کردن On-Demand Tier وقتی `project_analyzer` نیازش را اعلام
       می‌کند
@@ -357,4 +361,21 @@ commit `e4d783c`):** روی دستگاه واقعی، `bana doctor` محیط ر�
 `android_proot_signal = path_exists("/termux") || path_exists("/sdcard")`
 بازنویسی شد.
 
-فازهای ۲ تا ۱۰: **شروع‌نشده.**
+---
+
+**فاز ۲: شروع شده.** trait `PackageBackend` و ۶ پیاده‌سازی (apt، pacman،
+pkg، winget، choco، brew) اضافه شدند
+(`crates/bana-toolchain-mgr/src/backend.rs`). نکته‌ی طراحی کلیدی: انتخاب
+backend بر اساس `is_available` واقعی روی `HostKind` است، نه فرض مستقیم —
+چون هم Kali proot هم Arch لپ‌تاپ کاربر می‌توانند خانواده‌ی مشابه باشند ولی
+package manager واقعی‌شان (apt در برابر pacman) فرق دارد؛ این دقیقاً همان
+سناریویی است که تست `selects_pacman_when_only_pacman_available_on_linux`
+پوشش می‌دهد. `ToolchainError` (typed، با thiserror) اضافه شد. ۶ تست واحد
+با `MockRunner`. `bana-toolchain-mgr` حالا به `bana-env-scanner` وابسته
+است تا `CommandRunner` را دوباره استفاده کند، نه بازتعریف.
+
+باقی‌مانده‌ی فاز ۲: تعریف دقیق لایه‌ی Bundled Tier، منطق `bana setup`،
+On-Demand Tier، کش content-addressed، پچ AAPT2 (اکنون که تشخیصش در فاز ۱
+آماده است)، و idempotency.
+
+فازهای ۳ تا ۱۰: **شروع‌نشده.**
