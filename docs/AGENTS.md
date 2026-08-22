@@ -422,6 +422,8 @@ Termux اصلاً meta-package SDK ندارد. طبق درخواست صریح ک
 غیرلازمی انجام نشد. یک هشدار کامپایلر واقعی (`unused import: PackageBackend`)
 پیدا و رفع شد — برخلاف فرض اولیه، متدهای trait روی `Box<dyn Trait>` بدون
 import کار می‌کنند (فقط برای انواع generic/concrete پشت trait bound به
-import نیاز است، نه برای خودِ trait object).
+import نیاز است، نه برای خودِ trait object). رفع این هشدار روی دستگاه
+واقعی (commit `230430c`) تأیید شد: `cargo build --workspace` دیگر هیچ
+هشدار واقعی کد ندارد، فقط همان هشدار بی‌خطر GC proot باقی مانده.
 
 فازهای ۳ تا ۱۰: **شروع‌نشده.**
