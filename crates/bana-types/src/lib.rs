@@ -63,6 +63,22 @@ pub struct ProjectFingerprint {
     pub confidence: f32,
 }
 
+/// یک رکورد ثبت‌شده از تلاش نصب — چه موفق چه شکست‌خورده — برای این‌که
+/// عیب‌یابی داخلی آینده‌ی bana بتواند خودکار بفهمد هر ابزار از کجا و چطور
+/// آمده. یک فایل جداگانه به ازای هر نصب.
+/// A recorded install attempt — success or failure — so bana's future
+/// internal diagnostics can automatically understand where and how each
+/// tool arrived. One separate file per install.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstallRecord {
+    pub tool_id: String,
+    pub backend_used: String,
+    pub package_name: String,
+    pub timestamp_unix: u64,
+    pub success: bool,
+    pub failure_reason: Option<String>,
+}
+
 /// اطلاعات تشخیص‌داده‌شده از یک نصب واقعی JDK.
 /// Detected information from a real JDK installation.
 #[derive(Debug, Clone, Serialize, Deserialize)]

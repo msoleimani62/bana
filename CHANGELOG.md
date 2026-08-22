@@ -11,6 +11,32 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- `YayBackend` به `PackageBackend` اضافه شد — چون `yay` هم پکیج‌های رسمی
+  هم AUR را پوشش می‌دهد (مثل `android-sdk` که فقط در AUR است)، وقتی
+  موجود باشد به `pacman` خالص ترجیح داده می‌شود.
+  `YayBackend` added to `PackageBackend` — since `yay` covers both
+  official and AUR packages (like `android-sdk`, AUR-only), it's
+  preferred over plain `pacman` when available.
+- کاتالوگ Bundled Tier (`crates/bana-toolchain-mgr/src/bundled.rs`) با
+  نام پکیج واقعی و سرچ‌شده (نه حدسی) برای JDK و Android SDK روی
+  apt/pacman/yay/pkg. یک نامتقارنی واقعی مهم مستند شد: Android SDK روی
+  `pacman` خالص پکیج رسمی ندارد (فقط AUR)، و Termux اصلاً meta-package
+  SDK ندارد.
+  Bundled Tier catalog (`crates/bana-toolchain-mgr/src/bundled.rs`) with
+  real, researched (never guessed) package names for JDK and Android SDK
+  across apt/pacman/yay/pkg. Documented a real, important asymmetry:
+  Android SDK has no official pacman package (AUR only), and Termux has
+  no SDK meta-package at all.
+- ثبت خودکار رکورد نصب (`crates/bana-toolchain-mgr/src/recorder.rs`،
+  `InstallRecorder`): بعد از هر تلاش نصب (موفق یا شکست‌خورده)، یک فایل
+  JSON مستقل زیر `<home>/.bana/installs/` نوشته می‌شود — طبق درخواست صریح
+  کاربر برای عیب‌یابی داخلی خودکار آینده. `InstallRecord` به `bana-types`
+  اضافه شد.
+  Automatic install-record logging (`crates/bana-toolchain-mgr/src/recorder.rs`,
+  `InstallRecorder`): after every install attempt (success or failure), a
+  standalone JSON file is written under `<home>/.bana/installs/` — per the
+  user's explicit request for future automatic internal diagnostics.
+  `InstallRecord` added to `bana-types`.
 - شروع فاز ۲: trait `PackageBackend` و ۶ پیاده‌سازی (`AptBackend`,
   `PacmanBackend`, `TermuxPkgBackend`, `WingetBackend`, `ChocoBackend`,
   `HomebrewBackend`) در `crates/bana-toolchain-mgr/src/backend.rs`، طبق

@@ -19,4 +19,13 @@ pub enum ToolchainError {
 
     #[error("cache directory '{path}' could not be prepared: {reason}")]
     CacheUnavailable { path: PathBuf, reason: String },
+
+    #[error(
+        "no confirmed package name for tool '{tool}' on backend '{backend}' \
+         (not researched yet, never guessed)"
+    )]
+    NoPackageForBackend {
+        tool: &'static str,
+        backend: &'static str,
+    },
 }

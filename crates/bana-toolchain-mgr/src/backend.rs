@@ -88,6 +88,29 @@ impl PackageBackend for PacmanBackend {
     }
 }
 
+/// wrapper واقعی روی `yay` — superset کاربردی `pacman`، چون هم پکیج‌های
+/// رسمی هم AUR را پوشش می‌دهد (مثل `android-sdk` که فقط توی AUR است).
+/// وقتی موجود باشد، به `pacman` خالص ترجیح داده می‌شود دقیقاً به همین
+/// دلیل: کار هرگز فقط به‌خاطر AUR-only بودن یک پکیج شکست نمی‌خورد.
+///
+/// A real wrapper around `yay` — a practical superset of `pacman`, since
+/// it covers both official-repo and AUR packages (like `android-sdk`,
+/// which is AUR-only). When available, it's preferred over plain `pacman`
+/// for exactly this reason: the install never fails just because a
+/// package happens to be AUR-only.
+pub struct YayBackend;
+impl PackageBackend for YayBackend {
+    fn name(&self) -> &'static str {
+        "yay"
+    }
+    fn is_available(&self, runner: &dyn CommandRunner) -> bool {
+        runner.run("yay", &["--version"]).is_some()
+    }
+    fn install(&self, runner: &dyn CommandRunner, package: &str) -> Result<(), ToolchainError> {
+        run_install(runner, self.name(), "yay", &["-S", "--noconfirm", package], package)
+    }
+}
+
 pub struct TermuxPkgBackend;
 impl PackageBackend for TermuxPkgBackend {
     fn name(&self) -> &'static str {
@@ -155,9 +178,11 @@ impl PackageBackend for HomebrewBackend {
 fn candidate_backends(host_kind: &HostKind) -> Vec<Box<dyn PackageBackend>> {
     match host_kind {
         HostKind::Termux => vec![Box::new(TermuxPkgBackend)],
-        HostKind::KaliNetHunterProot | HostKind::NativeLinux => {
-            vec![Box::new(AptBackend), Box::new(PacmanBackend)]
-        }
+        HostKind::KaliNetHunterProot | HostKind::NativeLinux => vec![
+            Box::new(AptBackend),
+            Box::new(YayBackend),
+            Box::new(PacmanBackend),
+        ],
         HostKind::Windows => vec![Box::new(WingetBackend), Box::new(ChocoBackend)],
         HostKind::MacOs => vec![Box::new(HomebrewBackend)],
         HostKind::Unknown => vec![],
@@ -165,17 +190,25 @@ fn candidate_backends(host_kind: &HostKind) -> Vec<Box<dyn PackageBackend>> {
 }
 
 /// انتخاب واقعی backend: از میان کاندیدهای همان خانواده‌ی میزبان، اولین
-/// موردی که واقعاً `is_available` است انتخاب می‌شود.
+/// موردی که واقعاً `is_available` است انتخاب می‌شود. نتیجه لاگ می‌شود تا
+/// بعداً لایه‌ی CLI بتواند به کاربر گزارش بدهد کدام ابزار واقعاً استفاده
+/// شد (طبق درخواست صریح کاربر: «هر وسیله‌ای لازم است استفاده کنیم، ولی
+/// گزارشش را به کاربر بدهیم»).
 /// Real backend selection: among the candidates for that host family, the
-/// first one that's actually `is_available` wins.
+/// first one that's actually `is_available` wins. The result is logged so
+/// the CLI layer can later report to the user which tool was actually
+/// used (per the user's explicit request: "use whatever tool is needed,
+/// but report it to the user").
 pub fn select_backend(
     runner: &dyn CommandRunner,
     host_kind: &HostKind,
 ) -> Result<Box<dyn PackageBackend>, ToolchainError> {
-    candidate_backends(host_kind)
+    let backend = candidate_backends(host_kind)
         .into_iter()
         .find(|backend| backend.is_available(runner))
-        .ok_or(ToolchainError::NoBackendAvailable)
+        .ok_or(ToolchainError::NoBackendAvailable)?;
+    tracing::info!(backend = backend.name(), "selected package backend");
+    Ok(backend)
 }
 
 #[cfg(test)]
@@ -248,6 +281,30 @@ mod tests {
         };
         let backend = select_backend(&runner, &HostKind::NativeLinux).unwrap();
         assert_eq!(backend.name(), "apt");
+    }
+
+    #[test]
+    fn yay_takes_priority_over_plain_pacman_when_both_available() {
+        // چون yay هم پکیج‌های رسمی هم AUR را پوشش می‌دهد، وقتی موجود است
+        // باید به pacman خالص ترجیح داده شود.
+        // Since yay covers both official and AUR packages, it should be
+        // preferred over plain pacman when both are available.
+        let runner = MockRunner {
+            available_programs: HashSet::from(["yay", "pacman"]),
+            install_should_fail: false,
+        };
+        let backend = select_backend(&runner, &HostKind::NativeLinux).unwrap();
+        assert_eq!(backend.name(), "yay");
+    }
+
+    #[test]
+    fn falls_back_to_plain_pacman_when_yay_absent() {
+        let runner = MockRunner {
+            available_programs: HashSet::from(["pacman"]),
+            install_should_fail: false,
+        };
+        let backend = select_backend(&runner, &HostKind::NativeLinux).unwrap();
+        assert_eq!(backend.name(), "pacman");
     }
 
     #[test]

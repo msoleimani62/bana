@@ -11,5 +11,6 @@ authors.workspace = true
 bana-types.workspace = true
 bana-env-scanner = { path = "../bana-env-scanner" }
 tokio.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

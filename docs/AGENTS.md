@@ -109,14 +109,25 @@
 
 **هدف:** فراهم‌کردن/پچ‌کردن ابزارهای گمشده، بدون حدس.
 
-- [ ] تعریف لایه‌ی Bundled Tier (چه چیزهایی، چه نسخه‌هایی — طبق بخش ۵ قانون)
+- [x] تعریف لایه‌ی Bundled Tier (چه چیزهایی، چه نسخه‌هایی — طبق بخش ۵ قانون)
+      — شروع شد با JDK و Android SDK (`crates/bana-toolchain-mgr/src/bundled.rs`)؛
+      نام پکیج واقعی و سرچ‌شده برای apt/pacman/yay/pkg (طبق بخش ۵.۲
+      RULES.md — نامتقارنی واقعی پیدا شد: Android SDK روی pacman خالص
+      اصلاً پکیج رسمی ندارد، فقط AUR؛ Termux اصلاً meta-package SDK ندارد)
 - [x] تعریف trait `PackageBackend` و پیاده‌سازی‌های v1: `TermuxPkgBackend`,
       `AptBackend`, `PacmanBackend` (طبق بخش ۵.۱ RULES.md — هیچ فراخوانی
       مستقیم pkg/apt/pacman خارج از این پیاده‌سازی‌ها مجاز نیست) —
       `crates/bana-toolchain-mgr/src/backend.rs`؛ انتخاب backend بر اساس
       `is_available` واقعی (نه فرض از روی HostKind)، چون هم گوشی هم لپ‌تاپ
       آرچ کاربر می‌توانند خانواده‌ی «لینوکس معمولی» باشند ولی package
-      manager واقعی‌شان فرق دارد؛ ۶ تست واحد با `MockRunner`
+      manager واقعی‌شان فرق دارد؛ `YayBackend` هم اضافه شد (superset
+      pacman، پوشش AUR)؛ ۸ تست واحد با `MockRunner`
+- [x] ثبت خودکار رکورد نصب — `crates/bana-toolchain-mgr/src/recorder.rs`
+      (`InstallRecorder` trait + `RealInstallRecorder`)؛ بعد از هر تلاش
+      نصب (موفق یا شکست‌خورده) یک فایل JSON مستقل زیر
+      `<home>/.bana/installs/` نوشته می‌شود، طبق درخواست صریح کاربر برای
+      عیب‌یابی داخلی خودکار آینده؛ `InstallRecord` به `bana-types` اضافه
+      شد؛ ۸ تست واحد (۲ در `recorder.rs`، ۶ در `bundled.rs`)
 - [x] پیاده‌سازی‌های چندسکویی: `WingetBackend`/`ChocoBackend` (ویندوز),
       `HomebrewBackend` (macOS) — همان الگوی trait، بدون تغییر در بقیه‌ی
       toolchain_mgr — انجام شد همراه بند بالا
@@ -363,23 +374,35 @@ commit `e4d783c`):** روی دستگاه واقعی، `bana doctor` محیط ر�
 
 ---
 
-**فاز ۲: شروع شده.** trait `PackageBackend` و ۶ پیاده‌سازی (apt، pacman،
-pkg، winget، choco، brew) اضافه شدند
+**فاز ۲: در حال پیشرفت.** trait `PackageBackend` و ۷ پیاده‌سازی (apt،
+pacman، yay، pkg، winget، choco، brew) اضافه شدند
 (`crates/bana-toolchain-mgr/src/backend.rs`). نکته‌ی طراحی کلیدی: انتخاب
-backend بر اساس `is_available` واقعی روی `HostKind` است، نه فرض مستقیم —
-چون هم Kali proot هم Arch لپ‌تاپ کاربر می‌توانند خانواده‌ی مشابه باشند ولی
-package manager واقعی‌شان (apt در برابر pacman) فرق دارد؛ این دقیقاً همان
-سناریویی است که تست `selects_pacman_when_only_pacman_available_on_linux`
-پوشش می‌دهد. `ToolchainError` (typed، با thiserror) اضافه شد. ۶ تست واحد
-با `MockRunner`. `bana-toolchain-mgr` حالا به `bana-env-scanner` وابسته
-است تا `CommandRunner` را دوباره استفاده کند، نه بازتعریف.
+backend بر اساس `is_available` واقعی است، نه فرض از روی `HostKind` — چون
+هم Kali proot هم Arch لپ‌تاپ کاربر می‌توانند خانواده‌ی مشابه باشند ولی
+package manager واقعی‌شان فرق دارد؛ این دقیقاً همان سناریویی است که تست
+`selects_pacman_when_only_pacman_available_on_linux` پوشش می‌دهد. طبق
+تأیید کاربر که از `yay` استفاده می‌کند، `YayBackend` هم اضافه شد و چون
+superset پکیج‌های رسمی+AUR است، وقتی موجود باشد به `pacman` خالص ترجیح
+داده می‌شود.
 
-باقی‌مانده‌ی فاز ۲: تعریف دقیق لایه‌ی Bundled Tier، منطق `bana setup`،
-On-Demand Tier، کش content-addressed، پچ AAPT2 (اکنون که تشخیصش در فاز ۱
-آماده است)، و idempotency.
+کاتالوگ Bundled Tier (`bundled.rs`) با JDK و Android SDK شروع شد — هر
+اسم پکیج واقعاً سرچ و منبع‌دار شد (نه حدس)، و یک نامتقارنی واقعی مهم پیدا
+شد: Android SDK روی `pacman` خالص اصلاً پکیج رسمی ندارد (فقط AUR)، و
+Termux اصلاً meta-package SDK ندارد. طبق درخواست صریح کاربر، بعد از هر
+تلاش نصب (موفق یا شکست‌خورده) یک رکورد جداگانه به‌صورت JSON زیر
+`<home>/.bana/installs/` نوشته می‌شود (`recorder.rs`، `InstallRecorder`)
+تا عیب‌یابی داخلی آینده بتواند خودکار بفهمد هر ابزار از کجا آمد.
+`ToolchainError` (typed، با thiserror) گسترش یافت. مجموع ۱۶ تست واحد در
+`bana-toolchain-mgr`. این کریت حالا به `bana-env-scanner` هم وابسته است
+تا `CommandRunner` را دوباره استفاده کند، نه بازتعریف.
 
-**تأیید روی دستگاه واقعی (commit `5db316e`):** هر ۶ تست جدید
+باقی‌مانده‌ی فاز ۲: اتصال این زیرساخت به دستور CLI `bana setup`، On-Demand
+Tier، کش content-addressed، پچ AAPT2 (اکنون که تشخیصش در فاز ۱ آماده
+است)، و idempotency.
+
+**تأیید روی دستگاه واقعی تا commit `5db316e`:** هر ۶ تست اولیه‌ی
 `bana-toolchain-mgr` سبز؛ ۳۴ تست `bana-env-scanner` هم دست‌نخورده و سبز
-باقی ماندند.
+باقی ماندند. باقی‌مانده‌ی این قدم (yay/کاتالوگ/recorder، مجموعاً ۱۶ تست)
+هنوز روی دستگاه تست نشده — منتظر نتیجه.
 
 فازهای ۳ تا ۱۰: **شروع‌نشده.**

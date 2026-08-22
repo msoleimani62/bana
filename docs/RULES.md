@@ -184,22 +184,42 @@ runner ویندوز/مک) یا کمک کاربران دیگر انجام خوا�
 
 ### ۵.۱ انتزاع اجرای نصب (PackageBackend)
 
-طبق اصل ۱۰، `toolchain_mgr` هرگز نباید مستقیم `pkg`/`apt`/`pacman` را صدا
-بزند. یک trait مشابه `ProjectScenario` تعریف می‌شود:
+طبق اصل ۱۰، `toolchain_mgr` هرگز نباید مستقیم `pkg`/`apt`/`pacman`/`yay`/
+`winget`/`choco`/`brew` را صدا بزند. یک trait تعریف شده:
 
 ```
 trait PackageBackend {
-    fn host_kind(&self) -> HostKind;
-    fn is_available(&self) -> bool;
-    fn install(&self, tool: &ToolSpec) -> Result<(), ToolchainError>;
+    fn name(&self) -> &'static str;
+    fn is_available(&self, runner: &dyn CommandRunner) -> bool;
+    fn install(&self, runner: &dyn CommandRunner, package: &str) -> Result<(), ToolchainError>;
 }
 ```
 
-پیاده‌سازی‌های v1: `TermuxPkgBackend`، `AptBackend` (Debian/Ubuntu/UserLAnd/
-Kali proot معمولی)، `PacmanBackend` (Arch). انتخاب backend بر اساس همان
-`HostKind` تشخیص‌داده‌شده توسط `env_scanner` انجام می‌شود، نه فرض ثابت.
-افزودن میزبان جدید = یک پیاده‌سازی جدید از این trait، بدون لمس بقیه‌ی
-`toolchain_mgr`.
+پیاده‌سازی‌های v1: `AptBackend`، `PacmanBackend`، `YayBackend` (پوشش AUR،
+چون خیلی از پکیج‌های موردنیاز مثل `android-sdk` روی آرچ فقط در AUR
+هستند)، `TermuxPkgBackend`، `WingetBackend`، `ChocoBackend`،
+`HomebrewBackend`. انتخاب backend همیشه با `is_available` **واقعی** روی
+همان دستگاه تأیید می‌شود، نه فرض از روی `HostKind` — چون دو میزبان از یک
+خانواده (مثلاً Kali proot و Arch لپ‌تاپ، هر دو زیرمجموعه‌ی «لینوکس
+معمولی») می‌توانند package manager کاملاً متفاوتی داشته باشند. وقتی هم
+`yay` هم `pacman` خالص موجود باشند، `yay` ترجیح داده می‌شود چون superset
+است (هم رسمی هم AUR را پوشش می‌دهد) — نصب هرگز فقط به‌خاطر AUR-only بودن
+یک پکیج شکست نمی‌خورد. افزودن میزبان جدید = یک پیاده‌سازی جدید از این
+trait، بدون لمس بقیه‌ی `toolchain_mgr`.
+
+### ۵.۲ کاتالوگ Bundled و ثبت رکورد نصب
+
+نام واقعی پکیج هر ابزار روی هر backend **باید تحقیق و منبع‌دار شود**، نه
+حدس زده شود — دقیقاً همان اصل کلی پروژه. کاتالوگ (`bundled.rs`) هر ورودی
+را فقط برای backendهایی پر می‌کند که واقعاً بررسی شده‌اند؛ نبودِ یک کلید
+یعنی «هنوز تأیید نشده»، نه یک مقدار پیش‌فرض حدسی.
+
+بعد از هر تلاش نصب (چه موفق چه شکست‌خورده)، یک رکورد جداگانه به‌صورت فایل
+JSON مستقل زیر `<home>/.bana/installs/` نوشته می‌شود (`InstallRecorder`) —
+شامل ابزار، backend استفاده‌شده، نام دقیق پکیج، زمان، و نتیجه. این طبق
+درخواست صریح کاربر است: **هدف وسیله را مشخص می‌کند** — از هر backend که
+لازم باشد استفاده می‌شود تا نیاز واقعی برطرف شود، ولی همیشه گزارش دقیق
+این‌که چه چیزی از کجا آمد باید برای عیب‌یابی خودکار آینده در دسترس باشد.
 
 ---
 
