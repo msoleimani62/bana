@@ -67,8 +67,21 @@ def doctor() -> None:
     # cleanly outside any project (per RULES.md principle 12 — friendly
     # guidance, not a hard crash).
     project_root = str(Path.cwd())
-    wrapper = doctor_service.scan_gradle_wrapper(project_root)
     scenario = doctor_service.scan_project_scenario(project_root)
+
+    # مسیر واقعی Gradle به سناریو بستگی دارد: در پروژه‌ی Hybrid، ریشه‌ی
+    # واقعی Gradle زیرپوشه‌ی `android/` است، نه ریشه‌ی مخزن — دقیقاً همان
+    # چیزی که تست روی مخزن واقعی بی‌مرز نشان داد (gradlew زیر
+    # `android/gradlew` بود، نه مستقیم زیر ریشه).
+    # The real Gradle root depends on the scenario: in a Hybrid project,
+    # the actual Gradle root is the `android/` subfolder, not the repo
+    # root — exactly what testing against the real bimarz repo showed
+    # (gradlew was under `android/gradlew`, not directly under the root).
+    gradle_root = project_root
+    if scenario is not None and scenario.get("scenario_id") == "hybrid-rust-uniffi":
+        gradle_root = str(Path(project_root) / "android")
+
+    wrapper = doctor_service.scan_gradle_wrapper(gradle_root)
     typer.echo(doctor_service.render_project_report(project_root, wrapper, scenario))
 
 

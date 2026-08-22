@@ -503,3 +503,25 @@ toolchain_mgr) هم‌راستا باشد؛ `bana-plugin-api` حالا به `ban
 toolchain-mgr) هم دست‌نخورده ماندند. `bana doctor` توی `~/bana/bana-py`
 درست `not recognized` گزارش داد — چون آن پوشه نه `settings.gradle.kts`
 دارد نه `android/`.
+
+**تست روی مخزن واقعی بی‌مرز — دو باگ واقعی پیدا و رفع شد:**
+
+سناریو `hybrid-rust-uniffi` درست تشخیص داده شد، ولی با اطمینان فقط ۰.۵۰
+(انتظار ~۰.۹۵) و Gradle wrapper اشتباهاً `not found` گزارش شد، با این‌که
+واقعاً وجود داشت. با داده‌ی واقعی از کاربر (`cat Cargo.toml`، `ls
+android`) هر دو علت پیدا شد:
+
+- **باگ اطمینان پایین:** `Cargo.toml` ریشه‌ی بی‌مرز فقط یک workspace
+  manifest ساده است (`members = ["engine-core", "mobile-core"]`)؛ خودِ
+  وابستگی `uniffi` داخل یکی از اعضا (`mobile-core`) است، نه ریشه. چک
+  `mentions_uniffi` قبلی فقط ریشه را می‌خواند. رفع شد: حالا اعضای
+  workspace هم از روی خط `members = [...]` استخراج و `Cargo.toml` هر
+  کدام هم چک می‌شود. ۱ تست جدید (`detects_uniffi_inside_a_workspace_member_not_just_root`)
+  دقیقاً همین سناریوی واقعی را پوشش می‌دهد.
+- **باگ Gradle wrapper:** `android/gradlew` واقعاً وجود داشت، ولی داکتر
+  مستقیم `project_root/gradlew` (یعنی ریشه‌ی مخزن) را چک می‌کرد. رفع شد
+  در `cli/main.py`: حالا اول سناریو تشخیص داده می‌شود، و اگر
+  `hybrid-rust-uniffi` بود، مسیر چک Gradle به `project_root/android`
+  تغییر می‌کند — قبل از این، ترتیب برعکس بود (اول wrapper، بعد سناریو).
+
+منتظر تست مجدد روی دستگاه برای تأیید هر دو رفع.

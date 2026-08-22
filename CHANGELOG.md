@@ -10,6 +10,21 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### رفع شد / Fixed
+- تشخیص `uniffi` در سناریوی Hybrid حالا اعضای workspace را هم چک می‌کند
+  (نه فقط `Cargo.toml` ریشه) — طبق ساختار واقعی بی‌مرز که وابستگی uniffi
+  داخل عضو `mobile-core` است، نه ریشه.
+  Hybrid scenario's `uniffi` detection now also checks workspace members
+  (not just the root `Cargo.toml`) — matching the real bimarz structure,
+  where the uniffi dependency lives inside the `mobile-core` member, not
+  the root.
+- مسیر چک Gradle wrapper در `bana doctor` حالا سناریو-آگاه است: برای
+  پروژه‌ی Hybrid، `android/` را چک می‌کند نه ریشه‌ی مخزن را — پیدا شد
+  چون `android/gradlew` واقعاً وجود داشت ولی داکتر اشتباه گزارش می‌داد.
+  `bana doctor`'s Gradle wrapper check path is now scenario-aware: for a
+  Hybrid project, it checks `android/`, not the repo root — found because
+  `android/gradlew` genuinely existed but doctor wrongly reported it missing.
+
 ### افزوده شد / Added
 - شروع فاز ۳: دو سناریوی v1 (`PureKotlinScenario`،
   `HybridRustUniffiScenario`) به‌عنوان پیاده‌سازی `ProjectScenario`، و

@@ -18,15 +18,51 @@ fn has_android_gradle_project(probe: &dyn EnvProbe, project_root: &Path) -> bool
         || probe.path_exists(&android_dir.join("settings.gradle"))
 }
 
-/// آیا Cargo.toml ریشه واقعاً به uniffi اشاره می‌کند — بررسی سطحی محتوای
-/// فایل، نه فقط وجودش.
-/// Whether the root Cargo.toml actually mentions uniffi — a shallow
-/// content check, not just its existence.
+/// نام اعضای workspace را از یک خط `members = [...]` استخراج می‌کند —
+/// پارس ساده و سطحی، نه یک پارسر کامل TOML، ولی برای این الگوی رایج کافی
+/// است.
+/// Extracts workspace member names from a `members = [...]` line — a
+/// shallow, simple parse, not a full TOML parser, but enough for this
+/// common pattern.
+fn workspace_members(cargo_toml_content: &str) -> Vec<String> {
+    let Some(members_line) = cargo_toml_content
+        .lines()
+        .find(|l| l.trim_start().starts_with("members"))
+    else {
+        return Vec::new();
+    };
+    members_line
+        .split('"')
+        .skip(1)
+        .step_by(2)
+        .map(|s| s.to_string())
+        .collect()
+}
+
+/// آیا Cargo.toml ریشه یا هر کدام از اعضای workspace واقعاً به uniffi
+/// اشاره می‌کنند — بررسی سطحی محتوا، نه فقط وجود فایل. طبق داده‌ی واقعی
+/// بی‌مرز: Cargo.toml ریشه فقط یک workspace manifest ساده است
+/// (`members = [...]`)، خودِ وابستگی uniffi داخل یکی از اعضا (مثل
+/// mobile-core) است، نه ریشه — پس باید هر دو سطح چک شود.
+/// Whether the root Cargo.toml or any workspace member actually mentions
+/// uniffi — a shallow content check, not just file existence. Per real
+/// bimarz data: the root Cargo.toml is just a plain workspace manifest
+/// (`members = [...]`), the uniffi dependency itself lives inside a
+/// member (like mobile-core), not the root — so both levels must be
+/// checked.
 fn mentions_uniffi(probe: &dyn EnvProbe, project_root: &Path) -> bool {
-    probe
-        .read_to_string(&project_root.join("Cargo.toml"))
-        .map(|content| content.contains("uniffi"))
-        .unwrap_or(false)
+    let Some(root_content) = probe.read_to_string(&project_root.join("Cargo.toml")) else {
+        return false;
+    };
+    if root_content.contains("uniffi") {
+        return true;
+    }
+    workspace_members(&root_content).into_iter().any(|member| {
+        probe
+            .read_to_string(&project_root.join(&member).join("Cargo.toml"))
+            .map(|content| content.contains("uniffi"))
+            .unwrap_or(false)
+    })
 }
 
 impl ProjectScenario for HybridRustUniffiScenario {
@@ -105,6 +141,33 @@ mod tests {
             root.join("Cargo.toml"),
             "[workspace]\nmembers = [\"engine-core\"]\n[dependencies]\nuniffi = \"0.27\"\n"
                 .to_string(),
+        );
+
+        let confidence = HybridRustUniffiScenario.detect(&probe, &root).unwrap();
+        assert!(confidence > 0.9);
+    }
+
+    #[test]
+    fn detects_uniffi_inside_a_workspace_member_not_just_root() {
+        // دقیقاً ساختار واقعی بی‌مرز: Cargo.toml ریشه فقط یک workspace
+        // manifest ساده است، خودِ uniffi داخل یکی از اعضا (mobile-core) است.
+        // Exactly the real bimarz structure: the root Cargo.toml is just a
+        // plain workspace manifest, uniffi itself lives inside a member
+        // (mobile-core).
+        let root = PathBuf::from("/home/kali/bimarz");
+        let mut probe = MockProbe::default();
+        probe.existing_paths.push(root.join("Cargo.toml"));
+        probe
+            .existing_paths
+            .push(root.join("android").join("settings.gradle.kts"));
+        probe.files.insert(
+            root.join("Cargo.toml"),
+            "[workspace]\nresolver = \"2\"\nmembers = [\"engine-core\", \"mobile-core\"]\n"
+                .to_string(),
+        );
+        probe.files.insert(
+            root.join("mobile-core").join("Cargo.toml"),
+            "[dependencies]\nuniffi = \"0.27\"\n".to_string(),
         );
 
         let confidence = HybridRustUniffiScenario.detect(&probe, &root).unwrap();
