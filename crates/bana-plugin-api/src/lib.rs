@@ -1,6 +1,7 @@
 //! نقطه‌ی رسمی توسعه‌ی bana: هر سناریوی نوع پروژه این trait را پیاده می‌کند.
 //! bana's official extension point: every project scenario implements this trait.
 
+use bana_env_scanner::EnvProbe;
 use bana_types::ProjectFingerprint;
 use std::path::Path;
 
@@ -16,11 +17,17 @@ pub trait ProjectScenario {
     /// Unique identifier for this scenario, e.g. "pure-kotlin" or "hybrid-rust-uniffi".
     fn scenario_id(&self) -> &'static str;
 
-    /// آیا این سناریو با پروژه‌ی داده‌شده مطابقت دارد؛ اگر بله چقدر مطمئن است.
-    /// Whether this scenario matches the given project root, and how confident.
-    fn detect(&self, project_root: &Path) -> Option<f32>;
+    /// آیا این سناریو با پروژه‌ی داده‌شده مطابقت دارد؛ اگر بله چقدر مطمئن
+    /// است. `probe` پشت انتزاع `EnvProbe` است — دقیقاً همان الگوی
+    /// تست‌پذیری که در `env_scanner` استفاده شده — تا بدون هیچ فایل واقعی
+    /// روی دیسک هم کاملاً قابل تست باشد.
+    /// Whether this scenario matches the given project root, and how
+    /// confident. `probe` is behind the `EnvProbe` abstraction — the same
+    /// testability pattern used in `env_scanner` — so it's fully testable
+    /// without any real files on disk.
+    fn detect(&self, probe: &dyn EnvProbe, project_root: &Path) -> Option<f32>;
 
     /// ساخت اثرانگشت کامل، فقط پس از تأیید detect().
     /// Build the full fingerprint, only after detect() has confirmed a match.
-    fn fingerprint(&self, project_root: &Path) -> ProjectFingerprint;
+    fn fingerprint(&self, probe: &dyn EnvProbe, project_root: &Path) -> ProjectFingerprint;
 }

@@ -73,16 +73,38 @@ def _render_gradle_wrapper(wrapper: Any) -> str:
     return "  Gradle      : unrecognized status — please open an issue on GitHub"
 
 
-def render_project_report(project_root: str, wrapper: Any) -> str:
+def scan_project_scenario(project_root: str) -> Any:
     """
-    گزارش سطح پروژه (نه میزبان) — فعلاً فقط Gradle wrapper.
-    Project-level (not host-level) report — Gradle wrapper only for now.
+    فراخوانی تشخیص واقعی سناریوی پروژه (فاز ۳).
+    Calls the real project-scenario detection (Phase 3).
+    """
+    return json.loads(_bana_ffi.detect_project_scenario(project_root))
+
+
+def _render_scenario(fingerprint: Any) -> str:
+    """
+    تبدیل ProjectFingerprint خام (یا null) به یک خط خوانا.
+    Turns a raw ProjectFingerprint (or null) into one readable line.
+    """
+    if fingerprint is None:
+        return "  Scenario    : not recognized (not a known bana project type yet)"
+    return (
+        f"  Scenario    : {fingerprint['scenario_id']} "
+        f"(confidence {fingerprint['confidence']:.2f})"
+    )
+
+
+def render_project_report(project_root: str, wrapper: Any, scenario: Any) -> str:
+    """
+    گزارش سطح پروژه (نه میزبان) — سناریو، سپس Gradle wrapper.
+    Project-level (not host-level) report — scenario, then Gradle wrapper.
     """
     return "\n".join(
         [
             "",
             f"bana doctor -- project report ({project_root})",
             "",
+            _render_scenario(scenario),
             _render_gradle_wrapper(wrapper),
         ]
     )

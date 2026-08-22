@@ -10,4 +10,5 @@ authors.workspace = true
 [dependencies]
 bana-types.workspace = true
 bana-plugin-api.workspace = true
+bana-env-scanner = { path = "../bana-env-scanner" }
 thiserror.workspace = true

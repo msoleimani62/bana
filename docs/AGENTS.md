@@ -163,13 +163,27 @@
 
 **هدف:** تشخیص نوع پروژه و تولید `ProjectFingerprint`.
 
-- [ ] تعریف enum سناریوهای v1 (Pure Kotlin/Java, Hybrid Rust/uniffi) به‌عنوان
-      پیاده‌سازی‌های trait `ProjectScenario` از `bana-plugin-api`
-- [ ] منطق تشخیص خودکار (وجود `Cargo.toml` + uniffi، تعداد و نوع ماژول‌های
-      Gradle، ABIهای هدف)
-- [ ] پیاده‌سازی registry ثبت سناریوها بر پایه‌ی `bana-plugin-api` (نقطه‌ی
-      رسمی افزودن سناریوی جدید در آینده، بدون تغییر این کریت)
-- [ ] تست روی بی‌مرز واقعی (باید Hybrid تشخیص داده شود)
+- [x] تعریف enum سناریوهای v1 (Pure Kotlin/Java, Hybrid Rust/uniffi) به‌عنوان
+      پیاده‌سازی‌های trait `ProjectScenario` از `bana-plugin-api` —
+      `PureKotlinScenario` (`pure_kotlin.rs`) و `HybridRustUniffiScenario`
+      (`hybrid_rust_uniffi.rs`)؛ trait `ProjectScenario` با پارامتر
+      `probe: &dyn EnvProbe` گسترش یافت (تصمیم معماری واقعی: تا الان
+      `detect`/`fingerprint` مستقیم فایل‌سیستم واقعی می‌خواندند، بدون
+      تست‌پذیری — الان مثل بقیه‌ی پروژه پشت `EnvProbe` رفتند)
+- [x] منطق تشخیص خودکار (وجود `Cargo.toml` + uniffi، تعداد و نوع ماژول‌های
+      Gradle، ABIهای هدف) — Pure Kotlin: وجود `settings.gradle(.kts)`،
+      اطمینان کمتر اگر `Cargo.toml` هم‌سطح باشد؛ Hybrid: وجود همزمان
+      `Cargo.toml` ریشه + `android/settings.gradle.kts`، اطمینان بالاتر
+      اگر محتوای `Cargo.toml` واقعاً به `uniffi` اشاره کند (نه فقط
+      حدس از روی وجود فایل)
+- [x] پیاده‌سازی registry ثبت سناریوها بر پایه‌ی `bana-plugin-api` (نقطه‌ی
+      رسمی افزودن سناریوی جدید در آینده، بدون تغییر این کریت) —
+      `registry.rs::analyze_project`، انتخاب بر اساس بالاترین
+      `confidence`، نه اولین تطابق. ۱۱ تست واحد در کل کریت (۴ Pure
+      Kotlin + ۵ Hybrid + ۳ registry). اتصال به `bana-ffi::detect_project_scenario`
+      و نمایش در `bana doctor` (بخش گزارش پروژه، قبل از Gradle wrapper)
+- [~] تست روی بی‌مرز واقعی (باید Hybrid تشخیص داده شود) — هنوز روی مخزن
+      واقعی بی‌مرز اجرا نشده؛ منتظر تست کاربر روی دستگاه
 
 ---
 
@@ -457,5 +471,29 @@ NDK از این طریق نصب نمی‌شود) عمداً به فاز ۳ مو�
 (PackageBackend، کاتالوگ Bundled، رکورد نصب، `bana setup` idempotent، کش
 content-addressed) کامل است.**
 
-فاز ۳ (`project_analyzer`): **آماده‌ی شروع.**
+فاز ۳ (`project_analyzer`): **در حال پیشرفت.**
 فازهای ۴ تا ۱۰: **شروع‌نشده.**
+
+---
+
+**فاز ۳: در حال پیشرفت.** دو سناریوی v1 پیاده‌سازی شدند:
+`PureKotlinScenario` (`crates/bana-project-analyzer/src/pure_kotlin.rs`) و
+`HybridRustUniffiScenario` (`hybrid_rust_uniffi.rs`، مطابق دقیق ساختار
+واقعی بی‌مرز: Cargo workspace ریشه + `android/settings.gradle.kts`).
+
+**تصمیم معماری واقعی:** trait `ProjectScenario` (فاز ۰) تا الان
+`detect`/`fingerprint` را بدون پارامتر `probe` تعریف کرده بود — یعنی
+مستقیم فایل‌سیستم واقعی می‌خواند، بدون تست‌پذیری. الان با
+`probe: &dyn EnvProbe` گسترش یافت تا با بقیه‌ی پروژه (env_scanner،
+toolchain_mgr) هم‌راستا باشد؛ `bana-plugin-api` حالا به `bana-env-scanner`
+وابسته است.
+
+`registry.rs::analyze_project` بین سناریوهای ثبت‌شده، بالاترین
+`confidence` را انتخاب می‌کند (نه اولین تطابق) — تست
+`picks_hybrid_over_pure_kotlin_when_both_signals_present` دقیقاً همین
+انتخاب درست را در سناریوی هم‌پوشانی (هر دو سیگنال حاضر) تأیید می‌کند. ۱۱
+تست واحد در کل کریت. متصل به `bana-ffi::detect_project_scenario` و بخش
+جدید «Scenario» در گزارش پروژه‌ی `bana doctor`.
+
+باقی‌مانده‌ی فاز ۳: تست روی مخزن واقعی بی‌مرز (باید Hybrid تشخیص داده
+شود).

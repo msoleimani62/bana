@@ -68,7 +68,8 @@ def doctor() -> None:
     # guidance, not a hard crash).
     project_root = str(Path.cwd())
     wrapper = doctor_service.scan_gradle_wrapper(project_root)
-    typer.echo(doctor_service.render_project_report(project_root, wrapper))
+    scenario = doctor_service.scan_project_scenario(project_root)
+    typer.echo(doctor_service.render_project_report(project_root, wrapper, scenario))
 
 
 @app.command()

@@ -10,7 +10,29 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### افزوده شد / Added
+- شروع فاز ۳: دو سناریوی v1 (`PureKotlinScenario`،
+  `HybridRustUniffiScenario`) به‌عنوان پیاده‌سازی `ProjectScenario`، و
+  رجیستری `analyze_project` که بین سناریوهای ثبت‌شده بالاترین `confidence`
+  را انتخاب می‌کند. متصل به `bana-ffi::detect_project_scenario` و بخش
+  «Scenario» در گزارش پروژه‌ی `bana doctor`. ۱۱ تست واحد.
+  Phase 3 kickoff: two v1 scenarios (`PureKotlinScenario`,
+  `HybridRustUniffiScenario`) as `ProjectScenario` implementations, and an
+  `analyze_project` registry that picks the highest-confidence match among
+  registered scenarios. Wired to `bana-ffi::detect_project_scenario` and a
+  new "Scenario" section in `bana doctor`'s project report. 11 unit tests.
+
 ### تغییر یافت / Changed
+- trait `ProjectScenario` با پارامتر `probe: &dyn EnvProbe` گسترش یافت —
+  تا الان `detect`/`fingerprint` بدون تست‌پذیری مستقیم فایل‌سیستم واقعی
+  می‌خواندند؛ الان مثل بقیه‌ی پروژه (`env_scanner`، `toolchain_mgr`) پشت
+  انتزاع تست‌پذیر رفتند. `bana-plugin-api` حالا به `bana-env-scanner`
+  وابسته است.
+  The `ProjectScenario` trait was extended with a `probe: &dyn EnvProbe`
+  parameter — until now `detect`/`fingerprint` read the real filesystem
+  directly, with no testability; they now sit behind a testable
+  abstraction like the rest of the project (`env_scanner`,
+  `toolchain_mgr`). `bana-plugin-api` now depends on `bana-env-scanner`.
 - تصمیم معماری: پچ AAPT2 (نوشتن `android.aapt2FromMavenOverride`) از فاز
   ۲ به فاز ۴ (`build_driver`) موکول شد، چون خودِ پچ سطح پروژه است
   (`gradle.properties` یک پروژه‌ی خاص)، نه سطح میزبان — همان مرز Gradle

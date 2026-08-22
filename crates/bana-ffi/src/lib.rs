@@ -164,6 +164,21 @@ fn setup_bundled_tools() -> PyResult<String> {
         .map_err(|e| PyRuntimeError::new_err(format!("setup result serialize failed: {e}")))
 }
 
+/// تشخیص سناریوی یک پروژه‌ی مشخص و بازگرداندن آن به‌صورت JSON. اگر هیچ
+/// سناریوی شناخته‌شده‌ای مطابقت نداشت، `null` برمی‌گردد (نه خطا — عدم
+/// تطابق یک نتیجه‌ی معتبر است).
+/// Detects a specific project's scenario, returned as JSON. If no known
+/// scenario matched, returns `null` (not an error — no match is a valid
+/// outcome).
+#[pyfunction]
+fn detect_project_scenario(project_root: String) -> PyResult<String> {
+    let probe = bana_env_scanner::RealEnvProbe;
+    let fingerprint =
+        bana_project_analyzer::analyze_project(&probe, std::path::Path::new(&project_root));
+    serde_json::to_string(&fingerprint)
+        .map_err(|e| PyRuntimeError::new_err(format!("project scenario serialize failed: {e}")))
+}
+
 /// نقطه‌ی ثبت ماژول پایتون؛ نام باید با [lib].name در Cargo.toml یکی باشد.
 /// Python module entry point; name must match [lib].name in Cargo.toml.
 #[pymodule]
@@ -173,5 +188,6 @@ fn _bana_ffi(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(scan_toolchain, m)?)?;
     m.add_function(wrap_pyfunction!(scan_gradle_wrapper, m)?)?;
     m.add_function(wrap_pyfunction!(setup_bundled_tools, m)?)?;
+    m.add_function(wrap_pyfunction!(detect_project_scenario, m)?)?;
     Ok(())
 }
