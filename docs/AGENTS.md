@@ -497,3 +497,9 @@ toolchain_mgr) هم‌راستا باشد؛ `bana-plugin-api` حالا به `ban
 
 باقی‌مانده‌ی فاز ۳: تست روی مخزن واقعی بی‌مرز (باید Hybrid تشخیص داده
 شود).
+
+**تأیید روی دستگاه واقعی (commit `0b01e50`):** هر ۱۱ تست
+`bana-project-analyzer` سبز؛ ۵۵ تست بقیه‌ی کریت‌ها (۳۴ env-scanner + ۲۱
+toolchain-mgr) هم دست‌نخورده ماندند. `bana doctor` توی `~/bana/bana-py`
+درست `not recognized` گزارش داد — چون آن پوشه نه `settings.gradle.kts`
+دارد نه `android/`.
