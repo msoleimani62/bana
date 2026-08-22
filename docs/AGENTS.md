@@ -404,21 +404,11 @@ Termux اصلاً meta-package SDK ندارد. طبق درخواست صریح ک
 تلاش نصب (موفق یا شکست‌خورده) یک رکورد جداگانه به‌صورت JSON زیر
 `<home>/.bana/installs/` نوشته می‌شود (`recorder.rs`، `InstallRecorder`)
 تا عیب‌یابی داخلی آینده بتواند خودکار بفهمد هر ابزار از کجا آمد.
-`ToolchainError` (typed، با thiserror) گسترش یافت. مجموع ۱۶ تست واحد در
-`bana-toolchain-mgr`. این کریت حالا به `bana-env-scanner` هم وابسته است
-تا `CommandRunner` را دوباره استفاده کند، نه بازتعریف.
+`ToolchainError` (typed، با thiserror) گسترش یافت.
 
-باقی‌مانده‌ی فاز ۲: اتصال On-Demand Tier به فاز ۳ (`project_analyzer`)، و
-پچ AAPT2 (اکنون که تشخیصش در فاز ۱ آماده است).
-
-**کش content-addressed اضافه شد:** `crates/bana-toolchain-mgr/src/cache.rs`
-با هش FNV-1a قطعی (بدون وابستگی رمزنگاری سنگین، چون هدف شناسایی است نه
-امنیت) زیر `~/.cache/bana/<hash>`. `ensure_cache_dir` می‌گوید آیا مسیر از
-پروژه‌ی قبلی reuse شده یا همین الان ساخته شده. ۵ تست واحد. اتصال واقعی به
-On-Demand Tier (نصب NDK نسخه‌ی خاص از طریق `sdkmanager`، نه `PackageBackend`
-چون NDK از این طریق نصب نمی‌شود) عمداً به فاز ۳ موکول شد — بدون یک
-مصرف‌کننده‌ی واقعی («این پروژه دقیقاً به چه نسخه‌ای نیاز دارد»)، ساختن این
-منطق فقط حدس‌زدن نیاز می‌شد.
+**تأیید روی دستگاه واقعی تا commit `492cfcc`:** هر ۱۶ تست
+`bana-toolchain-mgr` سبز (۸ backend + ۶ bundled + ۲ recorder)؛ ۳۴ تست
+`bana-env-scanner` هم دست‌نخورده و سبز باقی ماندند.
 
 **دستور واقعی `bana setup` اضافه شد:** `bana-ffi::setup_bundled_tools`
 همه‌چیز را هماهنگ می‌کند — برای JDK و Android SDK، اول خودِ تشخیص واقعی
@@ -429,10 +419,6 @@ On-Demand Tier (نصب NDK نسخه‌ی خاص از طریق `sdkmanager`، ن�
 `SetupAction` (در `bana-types`) جمع‌آوری می‌شود. سرویس پایتون
 (`services/setup.py`) و دستور CLI `bana setup` هم اضافه شدند.
 
-**تأیید روی دستگاه واقعی تا commit `492cfcc`:** هر ۱۶ تست
-`bana-toolchain-mgr` سبز (۸ backend + ۶ bundled + ۲ recorder)؛ ۳۴ تست
-`bana-env-scanner` هم دست‌نخورده و سبز باقی ماندند.
-
 **تأیید نهایی `bana setup` روی دستگاه واقعی (commit `8b28a6a`):** هر ۵۰
 تست (۳۴ + ۱۶) سبز؛ `bana setup` هر دو ابزار (JDK، Android SDK) را درست
 `already satisfied` گزارش داد — یعنی idempotency واقعی کار کرد، هیچ نصب
@@ -442,5 +428,22 @@ import کار می‌کنند (فقط برای انواع generic/concrete پش�
 import نیاز است، نه برای خودِ trait object). رفع این هشدار روی دستگاه
 واقعی (commit `230430c`) تأیید شد: `cargo build --workspace` دیگر هیچ
 هشدار واقعی کد ندارد، فقط همان هشدار بی‌خطر GC proot باقی مانده.
+
+**کش content-addressed اضافه شد:** `crates/bana-toolchain-mgr/src/cache.rs`
+با هش FNV-1a قطعی (بدون وابستگی رمزنگاری سنگین، چون هدف شناسایی است نه
+امنیت) زیر `~/.cache/bana/<hash>`. `ensure_cache_dir` می‌گوید آیا مسیر از
+پروژه‌ی قبلی reuse شده یا همین الان ساخته شده. اتصال واقعی به On-Demand
+Tier (نصب NDK نسخه‌ی خاص از طریق `sdkmanager`، نه `PackageBackend` چون
+NDK از این طریق نصب نمی‌شود) عمداً به فاز ۳ موکول شد — بدون یک
+مصرف‌کننده‌ی واقعی («این پروژه دقیقاً به چه نسخه‌ای نیاز دارد»)، ساختن این
+منطق فقط حدس‌زدن نیاز می‌شد.
+
+**تأیید نهایی روی دستگاه واقعی (commit `313bb47`):** هر ۲۱ تست
+`bana-toolchain-mgr` سبز (۸ backend + ۶ bundled + ۲ recorder + ۵ cache)؛
+۳۴ تست `bana-env-scanner` هم دست‌نخورده و سبز باقی ماندند؛ هیچ هشدار
+واقعی کدی نبود، فقط همان هشدار بی‌خطر GC proot.
+
+باقی‌مانده‌ی فاز ۲: اتصال On-Demand Tier به فاز ۳ (`project_analyzer`)، و
+پچ AAPT2 (اکنون که تشخیصش در فاز ۱ آماده است).
 
 فازهای ۳ تا ۱۰: **شروع‌نشده.**
