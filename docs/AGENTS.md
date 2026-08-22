@@ -400,9 +400,8 @@ Termux اصلاً meta-package SDK ندارد. طبق درخواست صریح ک
 Tier، کش content-addressed، پچ AAPT2 (اکنون که تشخیصش در فاز ۱ آماده
 است)، و idempotency.
 
-**تأیید روی دستگاه واقعی تا commit `5db316e`:** هر ۶ تست اولیه‌ی
-`bana-toolchain-mgr` سبز؛ ۳۴ تست `bana-env-scanner` هم دست‌نخورده و سبز
-باقی ماندند. باقی‌مانده‌ی این قدم (yay/کاتالوگ/recorder، مجموعاً ۱۶ تست)
-هنوز روی دستگاه تست نشده — منتظر نتیجه.
+**تأیید روی دستگاه واقعی تا commit `492cfcc`:** هر ۱۶ تست
+`bana-toolchain-mgr` سبز (۸ backend + ۶ bundled + ۲ recorder)؛ ۳۴ تست
+`bana-env-scanner` هم دست‌نخورده و سبز باقی ماندند.
 
 فازهای ۳ تا ۱۰: **شروع‌نشده.**
