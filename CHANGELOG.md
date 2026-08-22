@@ -10,6 +10,18 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### تغییر یافت / Changed
+- تصمیم معماری: پچ AAPT2 (نوشتن `android.aapt2FromMavenOverride`) از فاز
+  ۲ به فاز ۴ (`build_driver`) موکول شد، چون خودِ پچ سطح پروژه است
+  (`gradle.properties` یک پروژه‌ی خاص)، نه سطح میزبان — همان مرز Gradle
+  wrapper. فاز ۲ از نظر مسئولیت‌های سطح میزبان کامل اعلام شد.
+  Architecture decision: the AAPT2 patch (writing
+  `android.aapt2FromMavenOverride`) was deferred from Phase 2 to Phase 4
+  (`build_driver`), since the patch itself is project-level (a specific
+  project's `gradle.properties`), not host-level — the same boundary as
+  the Gradle wrapper. Phase 2 is declared complete for its host-level
+  responsibilities.
+
 ### رفع شد / Fixed
 - هشدار کامپایلر `unused import: PackageBackend` در `bana-ffi/src/lib.rs`
   رفع شد — متدهای trait روی `Box<dyn Trait>` بدون import کار می‌کنند.
