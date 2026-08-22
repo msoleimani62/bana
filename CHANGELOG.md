@@ -11,6 +11,16 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- دستور واقعی `bana setup`: `bana-ffi::setup_bundled_tools` هماهنگ‌کننده‌ی
+  idempotent نصب — قبل از هر نصب، تشخیص واقعی فاز ۱ چک می‌شود؛ اگر ابزار
+  از قبل `Found` باشد، هیچ نصبی انجام نمی‌شود. سرویس پایتون
+  (`bana-py/bana/services/setup.py`) و دستور CLI `bana setup` اضافه شدند.
+  `SetupAction` به `bana-types` اضافه شد.
+  Real `bana setup` command: `bana-ffi::setup_bundled_tools` orchestrates
+  idempotent installation — before any install, Phase 1's real detection
+  is checked; if a tool is already `Found`, no install happens. Python
+  service (`bana-py/bana/services/setup.py`) and the `bana setup` CLI
+  command added. `SetupAction` added to `bana-types`.
 - `YayBackend` به `PackageBackend` اضافه شد — چون `yay` هم پکیج‌های رسمی
   هم AUR را پوشش می‌دهد (مثل `android-sdk` که فقط در AUR است)، وقتی
   موجود باشد به `pacman` خالص ترجیح داده می‌شود.

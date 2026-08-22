@@ -63,6 +63,17 @@ pub struct ProjectFingerprint {
     pub confidence: f32,
 }
 
+/// یک اقدام ثبت‌شده در جریان `bana setup` — یا از قبل برآورده بوده، یا
+/// نصب شده، یا شکست خورده.
+/// One recorded action during `bana setup` — either already satisfied,
+/// installed, or failed.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetupAction {
+    pub tool_id: String,
+    pub outcome: String,
+    pub detail: Option<String>,
+}
+
 /// یک رکورد ثبت‌شده از تلاش نصب — چه موفق چه شکست‌خورده — برای این‌که
 /// عیب‌یابی داخلی آینده‌ی bana بتواند خودکار بفهمد هر ابزار از کجا و چطور
 /// آمده. یک فایل جداگانه به ازای هر نصب.

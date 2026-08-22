@@ -131,7 +131,11 @@
 - [x] پیاده‌سازی‌های چندسکویی: `WingetBackend`/`ChocoBackend` (ویندوز),
       `HomebrewBackend` (macOS) — همان الگوی trait، بدون تغییر در بقیه‌ی
       toolchain_mgr — انجام شد همراه بند بالا
-- [ ] منطق نصب لایه‌ی پایه هنگام `bana setup`
+- [x] منطق نصب لایه‌ی پایه هنگام `bana setup` — دستور واقعی `bana setup`
+      اضافه شد (`bana-ffi::setup_bundled_tools`، سرویس
+      `bana-py/bana/services/setup.py`)؛ idempotent واقعی: قبل از هر نصب،
+      خودِ تشخیص فاز ۱ (`detect_jdk`/`detect_sdk`) چک می‌شود — اگر ابزار
+      از قبل واقعاً `Found` باشد، هیچ فراخوانی نصبی اصلاً انجام نمی‌شود
 - [ ] منطق فراهم‌کردن On-Demand Tier وقتی `project_analyzer` نیازش را اعلام
       می‌کند
 - [ ] کش content-addressed زیر `~/.cache/bana/<hash>` (مستقل از پروژه، قابل
@@ -396,9 +400,17 @@ Termux اصلاً meta-package SDK ندارد. طبق درخواست صریح ک
 `bana-toolchain-mgr`. این کریت حالا به `bana-env-scanner` هم وابسته است
 تا `CommandRunner` را دوباره استفاده کند، نه بازتعریف.
 
-باقی‌مانده‌ی فاز ۲: اتصال این زیرساخت به دستور CLI `bana setup`، On-Demand
-Tier، کش content-addressed، پچ AAPT2 (اکنون که تشخیصش در فاز ۱ آماده
-است)، و idempotency.
+باقی‌مانده‌ی فاز ۲: On-Demand Tier، کش content-addressed، پچ AAPT2 (اکنون
+که تشخیصش در فاز ۱ آماده است).
+
+**دستور واقعی `bana setup` اضافه شد:** `bana-ffi::setup_bundled_tools`
+همه‌چیز را هماهنگ می‌کند — برای JDK و Android SDK، اول خودِ تشخیص واقعی
+فاز ۱ (`detect_jdk`/`detect_sdk`) چک می‌شود؛ اگر ابزار از قبل `Found`
+باشد، هیچ فراخوانی نصبی اصلاً اتفاق نمی‌افتد (idempotency واقعی، نه فقط
+ادعایی). در غیر این‌صورت `select_backend` + `install_bundled_tool` صدا
+زده می‌شوند و رکوردش هم نوشته می‌شود. نتیجه‌ی هر ابزار به‌صورت
+`SetupAction` (در `bana-types`) جمع‌آوری می‌شود. سرویس پایتون
+(`services/setup.py`) و دستور CLI `bana setup` هم اضافه شدند.
 
 **تأیید روی دستگاه واقعی تا commit `492cfcc`:** هر ۱۶ تست
 `bana-toolchain-mgr` سبز (۸ backend + ۶ bundled + ۲ recorder)؛ ۳۴ تست

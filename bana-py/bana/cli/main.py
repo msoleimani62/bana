@@ -6,6 +6,7 @@ from pathlib import Path
 import typer
 
 from bana.services import doctor as doctor_service
+from bana.services import setup as setup_service
 from bana.services import wiring
 
 app = typer.Typer(
@@ -68,6 +69,20 @@ def doctor() -> None:
     project_root = str(Path.cwd())
     wrapper = doctor_service.scan_gradle_wrapper(project_root)
     typer.echo(doctor_service.render_project_report(project_root, wrapper))
+
+
+@app.command()
+def setup() -> None:
+    """
+    فراهم‌کردن idempotent لایه‌ی پایه‌ی توچین (فعلاً JDK و Android SDK):
+    هرچه از قبل واقعاً موجود است دست‌نخورده می‌ماند، فقط چیزی که واقعاً
+    غایب/ناقص است نصب می‌شود.
+    Idempotently provisions the toolchain base layer (JDK and Android SDK
+    for now): whatever is already really present stays untouched, only
+    what's genuinely missing/incomplete gets installed.
+    """
+    actions = setup_service.run_setup()
+    typer.echo(setup_service.render_setup_report(actions))
 
 
 if __name__ == "__main__":

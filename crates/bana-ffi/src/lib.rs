@@ -78,6 +78,94 @@ fn scan_gradle_wrapper(project_root: String) -> PyResult<String> {
         .map_err(|e| PyRuntimeError::new_err(format!("gradle wrapper scan serialize failed: {e}")))
 }
 
+/// اجرای idempotent «هرچی لازم است برآورده کن»: هر ابزار کاتالوگ Bundled
+/// Tier را چک می‌کند؛ اگر از قبل واقعاً پیدا شده باشد (`Found`)، هیچ
+/// نصبی انجام نمی‌شود؛ در غیر این‌صورت backend مناسب انتخاب و نصب واقعی
+/// انجام می‌شود، و طبق `InstallRecorder`، رکوردش هم نوشته می‌شود.
+/// نتیجه‌ی هر ابزار به‌صورت `SetupAction` جمع‌آوری و JSON برمی‌گردد.
+///
+/// Idempotent "make sure everything needed is satisfied": checks each
+/// Bundled Tier catalog entry; if it's already really found (`Found`), no
+/// install happens; otherwise a suitable backend is selected and a real
+/// install runs, with its record written per `InstallRecorder`. Each
+/// tool's result is collected as a `SetupAction` and returned as JSON.
+#[pyfunction]
+fn setup_bundled_tools() -> PyResult<String> {
+    use bana_toolchain_mgr::{
+        install_bundled_tool, select_backend, PackageBackend, RealInstallRecorder, ANDROID_SDK, JDK,
+    };
+    use bana_types::{SetupAction, ToolStatus};
+
+    let probe: Arc<dyn bana_env_scanner::EnvProbe + Send + Sync> =
+        Arc::new(bana_env_scanner::RealEnvProbe);
+    let host = bana_env_scanner::detect_host_environment(probe.as_ref());
+    let runner = bana_env_scanner::RealCommandRunner;
+    let recorder = RealInstallRecorder::under_home(&host.home_dir);
+
+    let mut actions: Vec<SetupAction> = Vec::new();
+
+    // JDK: idempotency واقعی — اگر تشخیص واقعی env_scanner از قبل آن را
+    // پیدا کرده باشد، اصلاً به نصب نمی‌رسیم.
+    // JDK: real idempotency — if env_scanner's real detection already
+    // found it, we never even reach the install step.
+    match bana_env_scanner::detect_jdk(&runner) {
+        ToolStatus::Found { .. } => actions.push(SetupAction {
+            tool_id: "jdk".to_string(),
+            outcome: "already_satisfied".to_string(),
+            detail: None,
+        }),
+        _ => match select_backend(&runner, &host.kind) {
+            Ok(backend) => {
+                let result = install_bundled_tool(&runner, backend.as_ref(), &JDK, &recorder);
+                actions.push(SetupAction {
+                    tool_id: "jdk".to_string(),
+                    outcome: if result.is_ok() { "installed".to_string() } else { "failed".to_string() },
+                    detail: Some(match result {
+                        Ok(()) => format!("via {}", backend.name()),
+                        Err(e) => e.to_string(),
+                    }),
+                });
+            }
+            Err(e) => actions.push(SetupAction {
+                tool_id: "jdk".to_string(),
+                outcome: "no_backend".to_string(),
+                detail: Some(e.to_string()),
+            }),
+        },
+    }
+
+    // Android SDK: همان منطق idempotency.
+    // Android SDK: the same idempotency logic.
+    match bana_env_scanner::detect_sdk(probe.as_ref(), &host.kind) {
+        ToolStatus::Found { .. } => actions.push(SetupAction {
+            tool_id: "android_sdk".to_string(),
+            outcome: "already_satisfied".to_string(),
+            detail: None,
+        }),
+        _ => match select_backend(&runner, &host.kind) {
+            Ok(backend) => {
+                let result = install_bundled_tool(&runner, backend.as_ref(), &ANDROID_SDK, &recorder);
+                actions.push(SetupAction {
+                    tool_id: "android_sdk".to_string(),
+                    outcome: if result.is_ok() { "installed".to_string() } else { "failed".to_string() },
+                    detail: Some(match result {
+                        Ok(()) => format!("via {}", backend.name()),
+                        Err(e) => e.to_string(),
+                    }),
+                });
+            }
+            Err(e) => actions.push(SetupAction {
+                tool_id: "android_sdk".to_string(),
+                outcome: "no_backend".to_string(),
+                detail: Some(e.to_string()),
+            }),
+        },
+    }
+
+    serde_json::to_string(&actions)
+        .map_err(|e| PyRuntimeError::new_err(format!("setup result serialize failed: {e}")))
+}
+
 /// نقطه‌ی ثبت ماژول پایتون؛ نام باید با [lib].name در Cargo.toml یکی باشد.
 /// Python module entry point; name must match [lib].name in Cargo.toml.
 #[pymodule]
@@ -86,5 +174,6 @@ fn _bana_ffi(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(scan_host, m)?)?;
     m.add_function(wrap_pyfunction!(scan_toolchain, m)?)?;
     m.add_function(wrap_pyfunction!(scan_gradle_wrapper, m)?)?;
+    m.add_function(wrap_pyfunction!(setup_bundled_tools, m)?)?;
     Ok(())
 }
