@@ -18,6 +18,13 @@ release time — per the Phase 10 checklist in AGENTS.md.
   without an import.
 
 ### افزوده شد / Added
+- کش content-addressed (`crates/bana-toolchain-mgr/src/cache.rs`) زیر
+  `~/.cache/bana/<hash>` با هش FNV-1a قطعی. `ensure_cache_dir` می‌گوید
+  مسیر از قبل reuse شده یا تازه ساخته شده. ۵ تست واحد.
+  Content-addressed cache (`crates/bana-toolchain-mgr/src/cache.rs`) under
+  `~/.cache/bana/<hash>`, using a deterministic FNV-1a hash.
+  `ensure_cache_dir` reports whether the path was reused or freshly
+  created. 5 unit tests.
 - دستور واقعی `bana setup`: `bana-ffi::setup_bundled_tools` هماهنگ‌کننده‌ی
   idempotent نصب — قبل از هر نصب، تشخیص واقعی فاز ۱ چک می‌شود؛ اگر ابزار
   از قبل `Found` باشد، هیچ نصبی انجام نمی‌شود. سرویس پایتون

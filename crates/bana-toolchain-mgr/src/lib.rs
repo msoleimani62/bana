@@ -15,6 +15,7 @@
 
 mod backend;
 mod bundled;
+mod cache;
 mod error;
 mod recorder;
 
@@ -23,6 +24,7 @@ pub use backend::{
     TermuxPkgBackend, WingetBackend, YayBackend,
 };
 pub use bundled::{install_bundled_tool, package_name_for, BundledToolSpec, ANDROID_SDK, JDK};
+pub use cache::{cache_dir_for, compute_cache_key, default_cache_root, ensure_cache_dir};
 pub use error::ToolchainError;
 pub use recorder::{current_unix_timestamp, InstallRecorder, RealInstallRecorder};
 
