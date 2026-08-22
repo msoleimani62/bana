@@ -416,4 +416,12 @@ Termux اصلاً meta-package SDK ندارد. طبق درخواست صریح ک
 `bana-toolchain-mgr` سبز (۸ backend + ۶ bundled + ۲ recorder)؛ ۳۴ تست
 `bana-env-scanner` هم دست‌نخورده و سبز باقی ماندند.
 
+**تأیید نهایی `bana setup` روی دستگاه واقعی (commit `8b28a6a`):** هر ۵۰
+تست (۳۴ + ۱۶) سبز؛ `bana setup` هر دو ابزار (JDK، Android SDK) را درست
+`already satisfied` گزارش داد — یعنی idempotency واقعی کار کرد، هیچ نصب
+غیرلازمی انجام نشد. یک هشدار کامپایلر واقعی (`unused import: PackageBackend`)
+پیدا و رفع شد — برخلاف فرض اولیه، متدهای trait روی `Box<dyn Trait>` بدون
+import کار می‌کنند (فقط برای انواع generic/concrete پشت trait bound به
+import نیاز است، نه برای خودِ trait object).
+
 فازهای ۳ تا ۱۰: **شروع‌نشده.**

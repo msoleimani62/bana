@@ -91,9 +91,7 @@ fn scan_gradle_wrapper(project_root: String) -> PyResult<String> {
 /// tool's result is collected as a `SetupAction` and returned as JSON.
 #[pyfunction]
 fn setup_bundled_tools() -> PyResult<String> {
-    use bana_toolchain_mgr::{
-        install_bundled_tool, select_backend, PackageBackend, RealInstallRecorder, ANDROID_SDK, JDK,
-    };
+    use bana_toolchain_mgr::{install_bundled_tool, select_backend, RealInstallRecorder, ANDROID_SDK, JDK};
     use bana_types::{SetupAction, ToolStatus};
 
     let probe: Arc<dyn bana_env_scanner::EnvProbe + Send + Sync> =

@@ -10,6 +10,13 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### رفع شد / Fixed
+- هشدار کامپایلر `unused import: PackageBackend` در `bana-ffi/src/lib.rs`
+  رفع شد — متدهای trait روی `Box<dyn Trait>` بدون import کار می‌کنند.
+  Compiler warning `unused import: PackageBackend` in
+  `bana-ffi/src/lib.rs` fixed — trait methods on `Box<dyn Trait>` work
+  without an import.
+
 ### افزوده شد / Added
 - دستور واقعی `bana setup`: `bana-ffi::setup_bundled_tools` هماهنگ‌کننده‌ی
   idempotent نصب — قبل از هر نصب، تشخیص واقعی فاز ۱ چک می‌شود؛ اگر ابزار
