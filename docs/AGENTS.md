@@ -471,7 +471,7 @@ NDK از این طریق نصب نمی‌شود) عمداً به فاز ۳ مو�
 (PackageBackend، کاتالوگ Bundled، رکورد نصب، `bana setup` idempotent، کش
 content-addressed) کامل است.**
 
-فاز ۳ (`project_analyzer`): **در حال پیشرفت.**
+فاز ۳ (`project_analyzer`): **کامل.**
 فازهای ۴ تا ۱۰: **شروع‌نشده.**
 
 ---
@@ -525,3 +525,9 @@ android`) هر دو علت پیدا شد:
   تغییر می‌کند — قبل از این، ترتیب برعکس بود (اول wrapper، بعد سناریو).
 
 منتظر تست مجدد روی دستگاه برای تأیید هر دو رفع.
+
+**تأیید نهایی موفق روی مخزن واقعی بی‌مرز (commit `9ca4170`):** هر دو باگ
+رفع‌شده به‌درستی تأیید شد — `Scenario: hybrid-rust-uniffi (confidence
+0.95)` و `Gradle: wrapper found, targets version 8.7`. ۱۲ تست
+`bana-project-analyzer` سبز (۱۱ قبلی + ۱ تست جدید workspace-member)؛ ۵۵
+تست بقیه‌ی کریت‌ها هم دست‌نخورده ماندند. فاز ۳ کامل است.
