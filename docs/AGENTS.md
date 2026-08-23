@@ -585,6 +585,10 @@ wrapper، پچ AAPT2 (موکول‌شده از فاز ۲)، اجرای `gradlew 
 (`cargo run -p mobile-core --bin uniffi-bindgen --features cli --
 generate --library ... --language kotlin --out-dir ...`). ۲ تست واحد.
 
+**تأیید روی دستگاه واقعی (commit `1f0ce56`):** هر ۶ تست
+`bana-build-driver` سبز (۴ native + ۲ bindgen)؛ ۶۷ تست بقیه‌ی کریت‌ها
+دست‌نخورده ماندند — مجموع ۷۳ تست کل پروژه.
+
 باقی‌مانده‌ی فاز ۴: ساخت/تأیید Gradle wrapper، پچ AAPT2 (موکول‌شده از فاز
 ۲)، اجرای `gradlew assembleDebug`، مدیریت خطاهای رایج، و تست end-to-end
 روی بی‌مرز تا APK خام.
