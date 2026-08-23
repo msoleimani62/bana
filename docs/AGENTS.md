@@ -565,6 +565,10 @@ Mockهای موجود در فاز‌های ۱ و ۲ نشکستند. `RealCommand
 فراخوانی استفاده کرده بود. رفع شد با `Mutex` (همان الگویی که قبلاً در
 `InMemoryRecorder` درست پیاده‌سازی شده بود).
 
+**تأیید روی دستگاه واقعی (commit `763c0d7`):** هر ۴ تست جدید
+`bana-build-driver` سبز؛ ۶۷ تست بقیه‌ی کریت‌ها (۳۴ env-scanner + ۱۲
+project-analyzer + ۲۱ toolchain-mgr) هم دست‌نخورده ماندند — مجموع ۷۱ تست.
+
 باقی‌مانده‌ی فاز ۴: تولید Kotlin bindings (uniffi)، ساخت/تأیید Gradle
 wrapper، پچ AAPT2 (موکول‌شده از فاز ۲)، اجرای `gradlew assembleDebug`،
 مدیریت خطاهای رایج، و تست end-to-end روی بی‌مرز تا APK خام.
