@@ -10,6 +10,21 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### افزوده شد / Added
+- شروع فاز ۴: اجرای واقعی build لایه‌ی native با `cargo-ndk`
+  (`crates/bana-build-driver/src/native.rs`)، سینتکس تأییدشده از مستندات
+  رسمی. `CommandRunner` با متد `run_in` (اجرا با working directory
+  مشخص) گسترش یافت — پیاده‌سازی پیش‌فرض به `run` fallback می‌کند تا
+  Mockهای فازهای قبلی نشکنند. ۴ تست واحد. هنوز به دستور کاربرنهایی وصل
+  نشده، منتظر uniffi bindgen و gradlew.
+  Phase 4 kickoff: real native-layer build via `cargo-ndk`
+  (`crates/bana-build-driver/src/native.rs`), syntax confirmed from
+  official docs. `CommandRunner` extended with a `run_in` method (run
+  with an explicit working directory) — the default implementation falls
+  back to `run` so earlier phases' mocks keep compiling. 4 unit tests.
+  Not yet wired to a user-facing command, waiting on uniffi bindgen and
+  gradlew.
+
 ### رفع شد / Fixed
 - تشخیص `uniffi` در سناریوی Hybrid حالا اعضای workspace را هم چک می‌کند
   (نه فقط `Cargo.toml` ریشه) — طبق ساختار واقعی بی‌مرز که وابستگی uniffi

@@ -191,7 +191,15 @@
 
 **هدف:** اجرای واقعی build بر اساس fingerprint، بدون دخالت کاربر.
 
-- [ ] اجرای build لایه‌ی native (cargo-ndk برای همه‌ی ABIهای لازم)
+- [x] اجرای build لایه‌ی native (cargo-ndk برای همه‌ی ABIهای لازم) —
+      `crates/bana-build-driver/src/native.rs`؛ سینتکس دقیق `cargo ndk`
+      قبل از کدنویسی از مستندات رسمی تأیید شد (نه از حافظه)؛ `CommandRunner`
+      با متد `run_in` (اجرای دستور با دایرکتوری کاری مشخص) گسترش یافت —
+      لازم چون `cargo` باید داخل ریشه‌ی workspace اجرا شود، نه هرجایی؛
+      پیاده‌سازی پیش‌فرض `run_in` روی `run` fallback می‌کند تا Mockهای
+      قدیمی نشکنند. تأیید اول واقعی وجود `cargo-ndk` قبل از build. ۴ تست
+      واحد. **هنوز به دستور کاربرنهایی وصل نشده** — منتظر uniffi bindgen و
+      gradlew تا یک pipeline کامل تشکیل شود
 - [ ] تولید Kotlin bindings (uniffi) در مسیر درست پروژه
 - [ ] ساخت/تأیید Gradle wrapper (هیچ‌وقت Gradle سیستمی مستقیم)
 - [ ] پچ AAPT2 در صورت عدم‌تطابق معماری — نوشتن
@@ -531,3 +539,24 @@ android`) هر دو علت پیدا شد:
 0.95)` و `Gradle: wrapper found, targets version 8.7`. ۱۲ تست
 `bana-project-analyzer` سبز (۱۱ قبلی + ۱ تست جدید workspace-member)؛ ۵۵
 تست بقیه‌ی کریت‌ها هم دست‌نخورده ماندند. فاز ۳ کامل است.
+
+---
+
+**فاز ۴: شروع شده.** اولین قدم — اجرای واقعی build لایه‌ی native با
+`cargo-ndk` — پیاده‌سازی شد (`crates/bana-build-driver/src/native.rs`).
+قبل از کدنویسی، سینتکس دقیق `cargo ndk` از مستندات رسمی (crates.io/GitHub)
+تأیید شد، نه از حافظه. یک نیاز فنی جدید کشف شد: `CommandRunner` فعلی
+هیچ راهی برای اجرای دستور با working directory مشخص نداشت (چون تا الان
+همه‌ی مصرف‌کننده‌ها ابزارهای سراسری مثل `java`/`apt-get` بودند)، ولی
+`cargo` باید داخل ریشه‌ی workspace اجرا شود. `run_in` به trait اضافه شد
+با یک پیاده‌سازی پیش‌فرض که به `run` fallback می‌کند — یعنی هیچ‌کدام از
+Mockهای موجود در فاز‌های ۱ و ۲ نشکستند. `RealCommandRunner` این متد را
+با `Command::current_dir` به‌درستی override می‌کند. ۴ تست واحد.
+
+**هنوز به هیچ دستور کاربرنهایی وصل نشده** — عمداً، چون ساخت لایه‌ی native
+به‌تنهایی برای کاربر مفید نیست؛ منتظر uniffi bindgen و اجرای gradlew
+می‌مانیم تا یک pipeline کامل `bana build` تشکیل شود.
+
+باقی‌مانده‌ی فاز ۴: تولید Kotlin bindings (uniffi)، ساخت/تأیید Gradle
+wrapper، پچ AAPT2 (موکول‌شده از فاز ۲)، اجرای `gradlew assembleDebug`،
+مدیریت خطاهای رایج، و تست end-to-end روی بی‌مرز تا APK خام.
