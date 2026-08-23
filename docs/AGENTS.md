@@ -557,6 +557,14 @@ Mockهای موجود در فاز‌های ۱ و ۲ نشکستند. `RealCommand
 به‌تنهایی برای کاربر مفید نیست؛ منتظر uniffi bindgen و اجرای gradlew
 می‌مانیم تا یک pipeline کامل `bana build` تشکیل شود.
 
+**باگ واقعی پیدا و رفع‌شده:** کامپایل با خطای واقعی شکست خورد:
+`RefCell<Option<...>> cannot be shared between threads safely`. علت:
+`CommandRunner: Send + Sync` است (چون توی `tokio::task::JoinSet` چندریسمانی
+استفاده می‌شود)، ولی `RefCell` این الزام را برآورده نمی‌کند —
+`MockRunner` تست‌های `native.rs` از `RefCell` برای ثبت آرگومان‌های واقعی
+فراخوانی استفاده کرده بود. رفع شد با `Mutex` (همان الگویی که قبلاً در
+`InMemoryRecorder` درست پیاده‌سازی شده بود).
+
 باقی‌مانده‌ی فاز ۴: تولید Kotlin bindings (uniffi)، ساخت/تأیید Gradle
 wrapper، پچ AAPT2 (موکول‌شده از فاز ۲)، اجرای `gradlew assembleDebug`،
 مدیریت خطاهای رایج، و تست end-to-end روی بی‌مرز تا APK خام.

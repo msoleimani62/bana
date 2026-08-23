@@ -75,16 +75,20 @@ pub fn build_native_layer(
 mod tests {
     use super::*;
     use bana_env_scanner::CommandOutput;
-    use std::cell::RefCell;
+    use std::sync::Mutex;
 
     /// شبیه‌ساز اجرای دستور که آرگومان‌های واقعی ساخته‌شده را هم ثبت
-    /// می‌کند، تا مطمئن شویم دستور نهایی درست ساخته می‌شود.
+    /// می‌کند، تا مطمئن شویم دستور نهایی درست ساخته می‌شود. از `Mutex`
+    /// استفاده شده، نه `RefCell`، چون `CommandRunner: Send + Sync` است و
+    /// `RefCell` این الزام را برآورده نمی‌کند.
     /// Simulates command execution while also recording the actually
     /// built arguments, to confirm the final command is built correctly.
+    /// Uses `Mutex`, not `RefCell`, since `CommandRunner: Send + Sync` and
+    /// `RefCell` doesn't satisfy that requirement.
     struct MockRunner {
         ndk_available: bool,
         build_should_fail: bool,
-        last_call: RefCell<Option<(String, Vec<String>)>>,
+        last_call: Mutex<Option<(String, Vec<String>)>>,
     }
 
     impl CommandRunner for MockRunner {
@@ -100,7 +104,7 @@ mod tests {
         }
 
         fn run_in(&self, _cwd: &Path, program: &str, args: &[&str]) -> Option<CommandOutput> {
-            *self.last_call.borrow_mut() = Some((
+            *self.last_call.lock().unwrap() = Some((
                 program.to_string(),
                 args.iter().map(|s| s.to_string()).collect(),
             ));
@@ -121,7 +125,7 @@ mod tests {
         let runner = MockRunner {
             ndk_available: true,
             build_should_fail: false,
-            last_call: RefCell::new(None),
+            last_call: Mutex::new(None),
         };
 
         let result = build_native_layer(
@@ -133,7 +137,7 @@ mod tests {
         );
 
         assert!(result.is_ok());
-        let (program, args) = runner.last_call.borrow().clone().unwrap();
+        let (program, args) = runner.last_call.lock().unwrap().clone().unwrap();
         assert_eq!(program, "cargo");
         assert_eq!(
             args,
@@ -156,7 +160,7 @@ mod tests {
         let runner = MockRunner {
             ndk_available: true,
             build_should_fail: false,
-            last_call: RefCell::new(None),
+            last_call: Mutex::new(None),
         };
 
         build_native_layer(
@@ -168,7 +172,7 @@ mod tests {
         )
         .unwrap();
 
-        let (_, args) = runner.last_call.borrow().clone().unwrap();
+        let (_, args) = runner.last_call.lock().unwrap().clone().unwrap();
         let t_flag_count = args.iter().filter(|a| a.as_str() == "-t").count();
         assert_eq!(t_flag_count, ALL_ABIS.len());
     }
@@ -178,7 +182,7 @@ mod tests {
         let runner = MockRunner {
             ndk_available: false,
             build_should_fail: false,
-            last_call: RefCell::new(None),
+            last_call: Mutex::new(None),
         };
 
         let result = build_native_layer(
@@ -197,7 +201,7 @@ mod tests {
         let runner = MockRunner {
             ndk_available: true,
             build_should_fail: true,
-            last_call: RefCell::new(None),
+            last_call: Mutex::new(None),
         };
 
         match build_native_layer(

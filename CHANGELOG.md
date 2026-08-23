@@ -26,6 +26,11 @@ release time — per the Phase 10 checklist in AGENTS.md.
   gradlew.
 
 ### رفع شد / Fixed
+- باگ کامپایل واقعی در `native.rs`: `MockRunner` تست از `RefCell` استفاده
+  می‌کرد که با `CommandRunner: Send + Sync` سازگار نیست؛ با `Mutex`
+  جایگزین شد.
+  Real compile bug in `native.rs`: the test `MockRunner` used `RefCell`,
+  incompatible with `CommandRunner: Send + Sync`; replaced with `Mutex`.
 - تشخیص `uniffi` در سناریوی Hybrid حالا اعضای workspace را هم چک می‌کند
   (نه فقط `Cargo.toml` ریشه) — طبق ساختار واقعی بی‌مرز که وابستگی uniffi
   داخل عضو `mobile-core` است، نه ریشه.
