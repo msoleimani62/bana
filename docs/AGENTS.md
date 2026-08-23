@@ -200,7 +200,13 @@
       قدیمی نشکنند. تأیید اول واقعی وجود `cargo-ndk` قبل از build. ۴ تست
       واحد. **هنوز به دستور کاربرنهایی وصل نشده** — منتظر uniffi bindgen و
       gradlew تا یک pipeline کامل تشکیل شود
-- [ ] تولید Kotlin bindings (uniffi) در مسیر درست پروژه
+- [x] تولید Kotlin bindings (uniffi) در مسیر درست پروژه —
+      `crates/bana-build-driver/src/bindgen.rs`؛ سینتکس «library mode»
+      (`cargo run -p <crate> --bin uniffi-bindgen --features cli --
+      generate --library <.so> --language kotlin --out-dir <path>`) از
+      مستندات رسمی UniFFI تأیید شد — دقیقاً همان الگویی که خودِ بی‌مرز
+      استفاده می‌کند. ۲ تست واحد (با `Mutex`، نه `RefCell`، طبق درس باگ
+      قبلی)
 - [ ] ساخت/تأیید Gradle wrapper (هیچ‌وقت Gradle سیستمی مستقیم)
 - [ ] پچ AAPT2 در صورت عدم‌تطابق معماری — نوشتن
       `android.aapt2FromMavenOverride` در `gradle.properties` همان پروژه
@@ -572,3 +578,13 @@ project-analyzer + ۲۱ toolchain-mgr) هم دست‌نخورده ماندند �
 باقی‌مانده‌ی فاز ۴: تولید Kotlin bindings (uniffi)، ساخت/تأیید Gradle
 wrapper، پچ AAPT2 (موکول‌شده از فاز ۲)، اجرای `gradlew assembleDebug`،
 مدیریت خطاهای رایج، و تست end-to-end روی بی‌مرز تا APK خام.
+
+**تولید Kotlin bindings هم اضافه شد:**
+`crates/bana-build-driver/src/bindgen.rs` — سینتکس «library mode» از
+مستندات رسمی UniFFI تأیید شد، دقیقاً منطبق با الگوی خودِ بی‌مرز
+(`cargo run -p mobile-core --bin uniffi-bindgen --features cli --
+generate --library ... --language kotlin --out-dir ...`). ۲ تست واحد.
+
+باقی‌مانده‌ی فاز ۴: ساخت/تأیید Gradle wrapper، پچ AAPT2 (موکول‌شده از فاز
+۲)، اجرای `gradlew assembleDebug`، مدیریت خطاهای رایج، و تست end-to-end
+روی بی‌مرز تا APK خام.

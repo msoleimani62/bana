@@ -11,6 +11,13 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- تولید واقعی Kotlin bindings با `uniffi-bindgen`
+  (`crates/bana-build-driver/src/bindgen.rs`)، سینتکس «library mode»
+  تأییدشده از مستندات رسمی UniFFI، منطبق با الگوی خودِ بی‌مرز. ۲ تست واحد.
+  Real Kotlin binding generation via `uniffi-bindgen`
+  (`crates/bana-build-driver/src/bindgen.rs`), "library mode" syntax
+  confirmed from official UniFFI docs, matching bimarz's own pattern. 2
+  unit tests.
 - شروع فاز ۴: اجرای واقعی build لایه‌ی native با `cargo-ndk`
   (`crates/bana-build-driver/src/native.rs`)، سینتکس تأییدشده از مستندات
   رسمی. `CommandRunner` با متد `run_in` (اجرا با working directory
