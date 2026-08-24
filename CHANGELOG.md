@@ -11,6 +11,17 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- پچ واقعی AAPT2 (`crates/bana-build-driver/src/aapt2_patch.rs`): نوشتن
+  `android.aapt2FromMavenOverride` در `gradle.properties` پروژه —
+  تأییدشده از سرچ که این کلید مسیر فایل مستقیم می‌خواهد، نه Maven
+  coordinate. idempotent، جایگزین‌کننده‌ی خط قدیمی، و خطای صریح وقتی
+  هیچ باینری هم‌معماری پیدا نشود. ۴ تست واحد.
+  Real AAPT2 patch (`crates/bana-build-driver/src/aapt2_patch.rs`):
+  writes `android.aapt2FromMavenOverride` into the project's
+  `gradle.properties` — confirmed via search that this key takes a
+  direct file path, not a Maven coordinate. Idempotent, replaces stale
+  lines, and fails clearly when no matching-architecture binary exists.
+  4 unit tests.
 - ساخت/تأیید idempotent Gradle wrapper
   (`crates/bana-build-driver/src/wrapper.rs`): اگر از قبل `Found` باشد
   Gradle سیستمی اصلاً صدا زده نمی‌شود؛ در غیر این‌صورت فقط همین یک‌بار

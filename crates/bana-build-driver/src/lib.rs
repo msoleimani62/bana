@@ -9,10 +9,15 @@
 //! checklist (Gradle wrapper, AAPT2 patch, gradlew) continues per Phase 4
 //! in docs/AGENTS.md.
 
+mod aapt2_patch;
 mod bindgen;
 mod native;
 mod wrapper;
 
+pub use aapt2_patch::{
+    ensure_aapt2_override, Aapt2PatchError, Aapt2PatchOutcome, PropertiesWriter,
+    RealPropertiesWriter,
+};
 pub use bindgen::{generate_kotlin_bindings, BindgenError};
 pub use native::{build_native_layer, NativeBuildError, ALL_ABIS};
 pub use wrapper::{ensure_gradle_wrapper, WrapperError};
