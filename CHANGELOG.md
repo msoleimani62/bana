@@ -11,6 +11,14 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- ساخت/تأیید idempotent Gradle wrapper
+  (`crates/bana-build-driver/src/wrapper.rs`): اگر از قبل `Found` باشد
+  Gradle سیستمی اصلاً صدا زده نمی‌شود؛ در غیر این‌صورت فقط همین یک‌بار
+  برای `gradle wrapper` استفاده می‌شود. ۴ تست واحد.
+  Idempotent Gradle wrapper ensure/generate
+  (`crates/bana-build-driver/src/wrapper.rs`): if already `Found`, system
+  Gradle is never touched at all; otherwise it's used exactly once for
+  `gradle wrapper`. 4 unit tests.
 - تولید واقعی Kotlin bindings با `uniffi-bindgen`
   (`crates/bana-build-driver/src/bindgen.rs`)، سینتکس «library mode»
   تأییدشده از مستندات رسمی UniFFI، منطبق با الگوی خودِ بی‌مرز. ۲ تست واحد.

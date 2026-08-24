@@ -207,7 +207,14 @@
       مستندات رسمی UniFFI تأیید شد — دقیقاً همان الگویی که خودِ بی‌مرز
       استفاده می‌کند. ۲ تست واحد (با `Mutex`، نه `RefCell`، طبق درس باگ
       قبلی)
-- [ ] ساخت/تأیید Gradle wrapper (هیچ‌وقت Gradle سیستمی مستقیم)
+- [x] ساخت/تأیید Gradle wrapper (هیچ‌وقت Gradle سیستمی مستقیم) —
+      `crates/bana-build-driver/src/wrapper.rs`؛ idempotent واقعی: اگر
+      تشخیص فاز ۱ (`detect_gradle_wrapper`) از قبل `Found` باشد، حتی به
+      Gradle سیستمی هم سر زده نمی‌شود؛ در غیر این‌صورت Gradle سیستمی فقط
+      همین یک‌بار برای `gradle wrapper` صدا زده می‌شود، بعد از آن دیگر
+      هرگز — طبق مرحله‌ی ۵ سند تشخیص بی‌مرز. ۴ تست واحد با یک شبیه‌ساز
+      واحد (`FakeProject`) که هم `EnvProbe` هم `CommandRunner` است و بعد
+      از تولید موفق، خودش را «دارای wrapper» علامت می‌زند
 - [ ] پچ AAPT2 در صورت عدم‌تطابق معماری — نوشتن
       `android.aapt2FromMavenOverride` در `gradle.properties` همان پروژه
       (موکول‌شده از فاز ۲؛ منطق تشخیص عدم‌تطابق از قبل در فاز ۱ آماده است،
@@ -592,3 +599,13 @@ generate --library ... --language kotlin --out-dir ...`). ۲ تست واحد.
 باقی‌مانده‌ی فاز ۴: ساخت/تأیید Gradle wrapper، پچ AAPT2 (موکول‌شده از فاز
 ۲)، اجرای `gradlew assembleDebug`، مدیریت خطاهای رایج، و تست end-to-end
 روی بی‌مرز تا APK خام.
+
+**ساخت/تأیید Gradle wrapper هم اضافه شد:**
+`crates/bana-build-driver/src/wrapper.rs` — idempotent واقعی: اگر تشخیص
+فاز ۱ از قبل `Found` باشد، حتی به Gradle سیستمی سر زده نمی‌شود؛ در
+غیر این‌صورت فقط همین یک‌بار Gradle سیستمی برای `gradle wrapper` صدا زده
+می‌شود، طبق مرحله‌ی ۵ سند تشخیص بی‌مرز. ۴ تست واحد.
+
+باقی‌مانده‌ی فاز ۴: پچ AAPT2 (موکول‌شده از فاز ۲)، اجرای
+`gradlew assembleDebug`، مدیریت خطاهای رایج، و تست end-to-end روی بی‌مرز
+تا APK خام.

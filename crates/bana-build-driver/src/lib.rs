@@ -11,9 +11,11 @@
 
 mod bindgen;
 mod native;
+mod wrapper;
 
 pub use bindgen::{generate_kotlin_bindings, BindgenError};
 pub use native::{build_native_layer, NativeBuildError, ALL_ABIS};
+pub use wrapper::{ensure_gradle_wrapper, WrapperError};
 
 /// تابع اتصال، فقط برای تأیید build/link صحیح workspace در فاز ۰.
 /// Wiring sanity check only, to confirm the workspace builds/links in Phase 0.
