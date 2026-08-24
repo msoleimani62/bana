@@ -11,6 +11,18 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- اجرای واقعی `gradlew assembleDebug`/`assembleRelease`
+  (`crates/bana-build-driver/src/gradlew.rs`) همیشه از طریق wrapper
+  خودِ پروژه؛ خطاهای رایج (NDK، نسخه‌ی JDK، AAPT2) به پیام قابل‌فهم
+  دسته‌بندی می‌شوند بدون این‌که خروجی خام Gradle مخفی شود. ۴ تست واحد.
+  این آخرین قطعه‌ی pipeline بود — هر ۵ گام build_driver حالا جداگانه
+  پیاده و تست شده‌اند.
+  Real `gradlew assembleDebug`/`assembleRelease` execution
+  (`crates/bana-build-driver/src/gradlew.rs`) always via the project's
+  own wrapper; common errors (NDK, JDK version, AAPT2) are classified
+  into a readable message without hiding the raw Gradle output. 4 unit
+  tests. This was the last pipeline piece — all 5 build_driver steps are
+  now individually implemented and tested.
 - پچ واقعی AAPT2 (`crates/bana-build-driver/src/aapt2_patch.rs`): نوشتن
   `android.aapt2FromMavenOverride` در `gradle.properties` پروژه —
   تأییدشده از سرچ که این کلید مسیر فایل مستقیم می‌خواهد، نه Maven

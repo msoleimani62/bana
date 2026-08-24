@@ -11,6 +11,7 @@
 
 mod aapt2_patch;
 mod bindgen;
+mod gradlew;
 mod native;
 mod wrapper;
 
@@ -19,6 +20,7 @@ pub use aapt2_patch::{
     RealPropertiesWriter,
 };
 pub use bindgen::{generate_kotlin_bindings, BindgenError};
+pub use gradlew::{run_gradlew, BuildVariant, GradleBuildError};
 pub use native::{build_native_layer, NativeBuildError, ALL_ABIS};
 pub use wrapper::{ensure_gradle_wrapper, WrapperError};
 
