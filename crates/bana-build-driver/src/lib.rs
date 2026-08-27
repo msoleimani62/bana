@@ -13,6 +13,7 @@ mod aapt2_patch;
 mod bindgen;
 mod gradlew;
 mod native;
+mod pipeline;
 mod wrapper;
 
 pub use aapt2_patch::{
@@ -22,6 +23,7 @@ pub use aapt2_patch::{
 pub use bindgen::{generate_kotlin_bindings, BindgenError};
 pub use gradlew::{run_gradlew, BuildVariant, GradleBuildError};
 pub use native::{build_native_layer, NativeBuildError, ALL_ABIS};
+pub use pipeline::{build_hybrid_project, PipelineError};
 pub use wrapper::{ensure_gradle_wrapper, WrapperError};
 
 /// تابع اتصال، فقط برای تأیید build/link صحیح workspace در فاز ۰.

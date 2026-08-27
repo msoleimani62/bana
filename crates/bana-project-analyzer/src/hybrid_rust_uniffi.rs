@@ -51,15 +51,31 @@ fn workspace_members(cargo_toml_content: &str) -> Vec<String> {
 /// member (like mobile-core), not the root — so both levels must be
 /// checked.
 fn mentions_uniffi(probe: &dyn EnvProbe, project_root: &Path) -> bool {
-    let Some(root_content) = probe.read_to_string(&project_root.join("Cargo.toml")) else {
-        return false;
-    };
+    find_uniffi_bindgen_member(probe, project_root).is_some()
+}
+
+/// نام دقیق عضو workspace که واقعاً حاوی وابستگی uniffi است (مثلاً
+/// `mobile-core` روی بی‌مرز) — یا `None` اگر خودِ ریشه یا هیچ عضوی uniffi
+/// نداشته باشد. این همان اطلاعاتی است که `build_driver` برای دستورات
+/// `cargo ndk -p <package>` و `uniffi-bindgen -p <package>` نیاز دارد،
+/// بدون این‌که کاربر مجبور باشد اسم پکیج را دستی مشخص کند.
+/// The exact workspace member that genuinely depends on uniffi (e.g.
+/// `mobile-core` in bimarz) — or `None` if neither the root nor any
+/// member has it. This is exactly what `build_driver` needs for
+/// `cargo ndk -p <package>` and `uniffi-bindgen -p <package>` commands,
+/// without requiring the user to specify the package manually.
+pub fn find_uniffi_bindgen_member(probe: &dyn EnvProbe, project_root: &Path) -> Option<String> {
+    let root_content = probe.read_to_string(&project_root.join("Cargo.toml"))?;
+    // اگر خودِ ریشه یک پکیج معمولی (نه فقط workspace) باشد و uniffi دارد،
+    // ریشه خودش «عضو» حساب می‌شود.
+    // If the root itself is a regular package (not just a workspace) and
+    // has uniffi, the root itself counts as the "member".
     if root_content.contains("uniffi") {
-        return true;
+        return Some(".".to_string());
     }
-    workspace_members(&root_content).into_iter().any(|member| {
+    workspace_members(&root_content).into_iter().find(|member| {
         probe
-            .read_to_string(&project_root.join(&member).join("Cargo.toml"))
+            .read_to_string(&project_root.join(member).join("Cargo.toml"))
             .map(|content| content.contains("uniffi"))
             .unwrap_or(false)
     })
@@ -206,5 +222,24 @@ mod tests {
             .existing_paths
             .push(root.join("android").join("settings.gradle.kts"));
         assert!(HybridRustUniffiScenario.detect(&probe, &root).is_none());
+    }
+
+    #[test]
+    fn find_uniffi_bindgen_member_returns_the_real_member_name() {
+        let root = PathBuf::from("/home/kali/bimarz");
+        let mut probe = MockProbe::default();
+        probe.files.insert(
+            root.join("Cargo.toml"),
+            "[workspace]\nmembers = [\"engine-core\", \"mobile-core\"]\n".to_string(),
+        );
+        probe.files.insert(
+            root.join("mobile-core").join("Cargo.toml"),
+            "[dependencies]\nuniffi = \"0.27\"\n".to_string(),
+        );
+
+        assert_eq!(
+            find_uniffi_bindgen_member(&probe, &root),
+            Some("mobile-core".to_string())
+        );
     }
 }

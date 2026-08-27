@@ -11,6 +11,18 @@ release time — per the Phase 10 checklist in AGENTS.md.
 ## [Unreleased]
 
 ### افزوده شد / Added
+- pipeline کامل build زنجیره شد و به دستور واقعی `bana build [--variant]`
+  وصل شد: `crates/bana-build-driver/src/pipeline.rs::build_hybrid_project`
+  → `bana-ffi::run_build` → CLI. تشخیص سناریو، عضو workspace حاوی uniffi
+  (بدون حدس)، Gradle wrapper، build native، uniffi bindgen، پچ AAPT2، و
+  gradlew همه پشت‌سرهم زنجیر شدند. `BuildResult` به `bana-types` اضافه
+  شد. ۳ تست یکپارچه با محیط شبیه‌سازی‌شده‌ی کامل مطابق ساختار بی‌مرز.
+  Full build pipeline chained and wired to a real `bana build [--variant]`
+  command: scenario detection, the uniffi-bearing workspace member
+  (never guessed), Gradle wrapper, native build, uniffi bindgen, AAPT2
+  patch, and gradlew all run in sequence. `BuildResult` added to
+  `bana-types`. 3 integration tests with a full simulated environment
+  matching bimarz's real structure.
 - اجرای واقعی `gradlew assembleDebug`/`assembleRelease`
   (`crates/bana-build-driver/src/gradlew.rs`) همیشه از طریق wrapper
   خودِ پروژه؛ خطاهای رایج (NDK، نسخه‌ی JDK، AAPT2) به پیام قابل‌فهم

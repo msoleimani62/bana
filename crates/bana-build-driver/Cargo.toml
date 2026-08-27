@@ -10,6 +10,7 @@ authors.workspace = true
 [dependencies]
 bana-types.workspace = true
 bana-env-scanner = { path = "../bana-env-scanner" }
+bana-project-analyzer = { path = "../bana-project-analyzer" }
 tokio.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

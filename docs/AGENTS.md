@@ -232,7 +232,15 @@
       استک‌تریس خام — `classify_gradle_error` خطاهای شناخته‌شده (NDK،
       نسخه‌ی JDK، AAPT2) را به پیام راهنما تبدیل می‌کند، ولی خروجی خام
       Gradle همیشه همراهش نگه داشته می‌شود، هرگز جایگزین/مخفی نمی‌شود
-- [ ] تست end-to-end روی بی‌مرز تا مرحله‌ی APK خام
+- [~] تست end-to-end روی بی‌مرز تا مرحله‌ی APK خام — کل pipeline
+      (`crates/bana-build-driver/src/pipeline.rs::build_hybrid_project`)
+      زنجیره شد: تشخیص سناریو → عضو workspace حاوی uniffi (بدون حدس، با
+      استفاده مجدد از `find_uniffi_bindgen_member` فاز ۳) → Gradle
+      wrapper → build native → uniffi bindgen → پچ AAPT2 → gradlew. متصل
+      به دستور واقعی `bana build` (`bana-ffi::run_build`). فرض صریح و
+      مستند v1: ماژول Gradle همیشه `app` نام‌گذاری شده (مطابق بی‌مرز). ۳
+      تست واحد یکپارچه با یک محیط شبیه‌سازی‌شده‌ی کامل. **هنوز روی خودِ
+      مخزن واقعی بی‌مرز اجرا نشده** — منتظر تست کاربر روی دستگاه
 
 ---
 
@@ -655,4 +663,11 @@ bindgen، Gradle wrapper، پچ AAPT2، gradlew) حالا به‌صورت جدا
 **تأیید روی دستگاه واقعی (commit `aa819bb`):** هر ۱۸ تست
 `bana-build-driver` سبز (۴ native + ۲ bindgen + ۴ wrapper + ۴ aapt2_patch
 + ۴ gradlew)؛ ۶۷ تست بقیه‌ی کریت‌ها دست‌نخورده ماندند — مجموع ۸۵ تست کل
+
+**pipeline کامل زنجیره شد و به دستور واقعی `bana build` وصل شد:**
+`crates/bana-build-driver/src/pipeline.rs::build_hybrid_project` +
+`bana-ffi::run_build` + دستور CLI `bana build [--variant debug|release]`.
+۳ تست یکپارچه با یک محیط شبیه‌سازی‌شده‌ی کامل (هم `EnvProbe` هم
+`CommandRunner` هم `PropertiesWriter`) که دقیقاً ساختار واقعی بی‌مرز را
+تقلید می‌کند. **هنوز روی خودِ مخزن بی‌مرز اجرا نشده** — قدم بعدی همین است.
 پروژه.

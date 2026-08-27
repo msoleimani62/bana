@@ -11,7 +11,7 @@ mod hybrid_rust_uniffi;
 mod pure_kotlin;
 mod registry;
 
-pub use hybrid_rust_uniffi::HybridRustUniffiScenario;
+pub use hybrid_rust_uniffi::{find_uniffi_bindgen_member, HybridRustUniffiScenario};
 pub use pure_kotlin::PureKotlinScenario;
 pub use registry::analyze_project;
 

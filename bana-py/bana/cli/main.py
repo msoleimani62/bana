@@ -5,6 +5,7 @@ from pathlib import Path
 
 import typer
 
+from bana.services import build as build_service
 from bana.services import doctor as doctor_service
 from bana.services import setup as setup_service
 from bana.services import wiring
@@ -97,6 +98,24 @@ def setup() -> None:
     """
     actions = setup_service.run_setup()
     typer.echo(setup_service.render_setup_report(actions))
+
+
+@app.command()
+def build(
+    variant: str = typer.Option("debug", help="Build variant: debug or release."),
+) -> None:
+    """
+    اجرای کامل pipeline ساخت (فاز ۱: فعلاً فقط سناریوی hybrid-rust-uniffi
+    پشتیبانی می‌شود، دقیقاً مطابق ساختار بی‌مرز) و تحویل APK خام.
+    Runs the full build pipeline (v1: only the hybrid-rust-uniffi scenario
+    is supported for now, exactly matching bimarz's layout) and delivers
+    the raw APK.
+    """
+    repo_root = str(Path.cwd())
+    result = build_service.run_build(repo_root, variant)
+    typer.echo(build_service.render_build_result(result))
+    if not result["success"]:
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":

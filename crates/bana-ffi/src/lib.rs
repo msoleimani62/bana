@@ -179,6 +179,54 @@ fn detect_project_scenario(project_root: String) -> PyResult<String> {
         .map_err(|e| PyRuntimeError::new_err(format!("project scenario serialize failed: {e}")))
 }
 
+/// اجرای کامل pipeline ساخت (Gradle wrapper → build native → uniffi
+/// bindgen → پچ AAPT2 → gradlew) برای یک پروژه‌ی مشخص، و بازگرداندن نتیجه
+/// به‌صورت JSON. `variant` می‌تواند "debug" یا "release" باشد.
+/// Runs the full build pipeline (Gradle wrapper → native build → uniffi
+/// bindgen → AAPT2 patch → gradlew) for a specific project, returning the
+/// result as JSON. `variant` can be "debug" or "release".
+#[pyfunction]
+fn run_build(repo_root: String, variant: String) -> PyResult<String> {
+    use bana_build_driver::{build_hybrid_project, BuildVariant, RealPropertiesWriter};
+    use bana_types::BuildResult;
+
+    let probe = bana_env_scanner::RealEnvProbe;
+    let runner = bana_env_scanner::RealCommandRunner;
+    let props = RealPropertiesWriter;
+    let host = bana_env_scanner::detect_host_environment(&probe);
+
+    let build_variant = match variant.as_str() {
+        "release" => BuildVariant::Release,
+        _ => BuildVariant::Debug,
+    };
+
+    let outcome = build_hybrid_project(
+        &probe,
+        &runner,
+        &props,
+        &host.kind,
+        &host.arch,
+        std::path::Path::new(&repo_root),
+        build_variant,
+    );
+
+    let build_result = match outcome {
+        Ok(apk_path) => BuildResult {
+            success: true,
+            apk_path: Some(apk_path.to_string_lossy().to_string()),
+            error: None,
+        },
+        Err(e) => BuildResult {
+            success: false,
+            apk_path: None,
+            error: Some(e.to_string()),
+        },
+    };
+
+    serde_json::to_string(&build_result)
+        .map_err(|e| PyRuntimeError::new_err(format!("build result serialize failed: {e}")))
+}
+
 /// نقطه‌ی ثبت ماژول پایتون؛ نام باید با [lib].name در Cargo.toml یکی باشد.
 /// Python module entry point; name must match [lib].name in Cargo.toml.
 #[pymodule]
@@ -189,5 +237,6 @@ fn _bana_ffi(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(scan_gradle_wrapper, m)?)?;
     m.add_function(wrap_pyfunction!(setup_bundled_tools, m)?)?;
     m.add_function(wrap_pyfunction!(detect_project_scenario, m)?)?;
+    m.add_function(wrap_pyfunction!(run_build, m)?)?;
     Ok(())
 }

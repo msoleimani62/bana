@@ -63,6 +63,17 @@ pub struct ProjectFingerprint {
     pub confidence: f32,
 }
 
+/// نتیجه‌ی اجرای کامل pipeline ساخت — یا موفق با مسیر APK، یا شکست‌خورده
+/// با پیام خطای واقعی.
+/// The result of a full build pipeline run — either successful with the
+/// APK path, or failed with the real error message.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BuildResult {
+    pub success: bool,
+    pub apk_path: Option<String>,
+    pub error: Option<String>,
+}
+
 /// یک اقدام ثبت‌شده در جریان `bana setup` — یا از قبل برآورده بوده، یا
 /// نصب شده، یا شکست خورده.
 /// One recorded action during `bana setup` — either already satisfied,
