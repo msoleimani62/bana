@@ -51,7 +51,11 @@ impl CommandRunner for RealCommandRunner {
     }
 
     fn run_in(&self, cwd: &Path, program: &str, args: &[&str]) -> Option<CommandOutput> {
-        let output = Command::new(program).args(args).current_dir(cwd).output().ok()?;
+        let output = Command::new(program)
+            .args(args)
+            .current_dir(cwd)
+            .output()
+            .ok()?;
         Some(CommandOutput {
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
             stderr: String::from_utf8_lossy(&output.stderr).to_string(),

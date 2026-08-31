@@ -40,10 +40,20 @@ pub struct HostEnvironment {
 /// Detection status for any single tool — never guessed, always one of these four.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ToolStatus<T> {
-    Found { path: PathBuf, info: T, verified: bool },
-    FoundButIncompatible { path: PathBuf, info: T, reason: String },
+    Found {
+        path: PathBuf,
+        info: T,
+        verified: bool,
+    },
+    FoundButIncompatible {
+        path: PathBuf,
+        info: T,
+        reason: String,
+    },
     NotFound,
-    AmbiguousMultiple { candidates: Vec<PathBuf> },
+    AmbiguousMultiple {
+        candidates: Vec<PathBuf>,
+    },
 }
 
 /// یک مسئله‌ی گزارش‌شده به کاربر، همراه با شدت آن.

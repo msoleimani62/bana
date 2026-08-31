@@ -124,7 +124,9 @@ pub fn detect_aapt2(
     }
 
     if let Some((path, machine)) = wrong_arch_found {
-        let expected_name = expected.map(machine_name).unwrap_or("an unknown architecture");
+        let expected_name = expected
+            .map(machine_name)
+            .unwrap_or("an unknown architecture");
         return ToolStatus::FoundButIncompatible {
             path,
             info: Aapt2Info {
@@ -215,7 +217,12 @@ mod tests {
             stdout: "Android Asset Packaging Tool (aapt) 2.19-...",
         };
 
-        match detect_aapt2(&probe, &runner, &HostKind::KaliNetHunterProot, &HostArch::Aarch64) {
+        match detect_aapt2(
+            &probe,
+            &runner,
+            &HostKind::KaliNetHunterProot,
+            &HostArch::Aarch64,
+        ) {
             ToolStatus::Found { info, .. } => {
                 assert!(!info.arch_mismatch);
                 assert!(info.version.contains("2.19"));
@@ -239,7 +246,12 @@ mod tests {
         probe.bytes.insert(path, fake_elf(EM_X86_64));
         let runner = MockRunner { stdout: "" };
 
-        match detect_aapt2(&probe, &runner, &HostKind::KaliNetHunterProot, &HostArch::Aarch64) {
+        match detect_aapt2(
+            &probe,
+            &runner,
+            &HostKind::KaliNetHunterProot,
+            &HostArch::Aarch64,
+        ) {
             ToolStatus::FoundButIncompatible { info, reason, .. } => {
                 assert!(info.arch_mismatch);
                 assert!(reason.contains("x86_64"));
@@ -270,7 +282,12 @@ mod tests {
         probe.bytes.insert(wrong, fake_elf(EM_X86_64));
 
         let runner = MockRunner { stdout: "aapt2 ok" };
-        match detect_aapt2(&probe, &runner, &HostKind::KaliNetHunterProot, &HostArch::Aarch64) {
+        match detect_aapt2(
+            &probe,
+            &runner,
+            &HostKind::KaliNetHunterProot,
+            &HostArch::Aarch64,
+        ) {
             ToolStatus::Found { info, .. } => assert!(!info.arch_mismatch),
             other => panic!("expected Found, got {other:?}"),
         }
@@ -302,7 +319,12 @@ mod tests {
         let runner = MockRunner { stdout: "" };
 
         assert!(matches!(
-            detect_aapt2(&probe, &runner, &HostKind::KaliNetHunterProot, &HostArch::Aarch64),
+            detect_aapt2(
+                &probe,
+                &runner,
+                &HostKind::KaliNetHunterProot,
+                &HostArch::Aarch64
+            ),
             ToolStatus::NotFound
         ));
     }

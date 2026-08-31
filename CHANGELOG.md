@@ -10,6 +10,39 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+### رفع شد / Fixed
+- باگ واقعی clippy، پیدا‌شده روی دستگاه واقعی بعد از ارتقای pyo3:
+  `crates/bana-env-scanner/src/gradle.rs` از `line.splitn(2,
+  '=').nth(1)?.trim()` استفاده می‌کرد که معادل دستی `split_once` است
+  (`clippy::manual_split_once`، با `-D warnings` مسدودکننده‌ی build
+  بود). به `line.split_once('=')?.1.trim()` تغییر یافت.
+  Real clippy bug, found on-device after the pyo3 bump:
+  `crates/bana-env-scanner/src/gradle.rs` used `line.splitn(2,
+  '=').nth(1)?.trim()`, a manual reimplementation of `split_once`
+  (`clippy::manual_split_once`, blocking under `-D warnings`). Changed
+  to `line.split_once('=')?.1.trim()`.
+- ناسازگاری واقعی و مسدودکننده: `pyo3` در `crates/bana-ffi/Cargo.toml`
+  روی `"0.22"` پین شده بود که حداکثر تا پایتون ۳.۱۳ را پشتیبانی می‌کند؛
+  با ارتقای پایتون دستگاه کاربر به ۳.۱۴.۶، `cargo clippy`/build کلاً
+  fail می‌شد (`the configured Python interpreter version (3.14) is newer
+  than PyO3's maximum supported version (3.13)`). ارتقا به `"0.29"` —
+  کد `bana-ffi/src/lib.rs` از قبل با API مدرن (`Bound<'_, PyModule>`)
+  نوشته شده بود، نیازی به تغییر دیگری نداشت.
+  Real, blocking incompatibility: `pyo3` in `crates/bana-ffi/Cargo.toml`
+  was pinned to `"0.22"`, which only supports up to Python 3.13; once
+  the user's device Python was upgraded to 3.14.6, `cargo
+  clippy`/build failed outright (`the configured Python interpreter
+  version (3.14) is newer than PyO3's maximum supported version
+  (3.13)`). Bumped to `"0.29"` — `bana-ffi/src/lib.rs` already used the
+  modern `Bound<'_, PyModule>` API, so no further code changes were
+  needed.
+- `cargo fmt --check` بود روی ۱۶ فایل Rust (خط‌شکنی چندخطی به‌جای
+  تک‌خطی برای عبارات طولانی) — همه دستی و دقیقاً مطابق دیف واقعی
+  `cargo fmt` اعمال شد.
+  `cargo fmt --check` was failing on 16 Rust files (multi-line
+  wrapping vs. single-line for long expressions) — all applied
+  manually, matching the real `cargo fmt` diff exactly.
+
 ### افزوده شد / Added
 - pipeline کامل build زنجیره شد و به دستور واقعی `bana build [--variant]`
   وصل شد: `crates/bana-build-driver/src/pipeline.rs::build_hybrid_project`

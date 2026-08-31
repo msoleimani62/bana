@@ -198,9 +198,10 @@ mod tests {
         probe
             .existing_paths
             .push(root.join("android").join("settings.gradle.kts"));
-        probe
-            .files
-            .insert(root.join("Cargo.toml"), "[package]\nname = \"foo\"\n".to_string());
+        probe.files.insert(
+            root.join("Cargo.toml"),
+            "[package]\nname = \"foo\"\n".to_string(),
+        );
 
         let confidence = HybridRustUniffiScenario.detect(&probe, &root).unwrap();
         assert!(confidence < 0.6);

@@ -670,4 +670,15 @@ bindgen، Gradle wrapper، پچ AAPT2، gradlew) حالا به‌صورت جدا
 ۳ تست یکپارچه با یک محیط شبیه‌سازی‌شده‌ی کامل (هم `EnvProbe` هم
 `CommandRunner` هم `PropertiesWriter`) که دقیقاً ساختار واقعی بی‌مرز را
 تقلید می‌کند. **هنوز روی خودِ مخزن بی‌مرز اجرا نشده** — قدم بعدی همین است.
+
+**باگ واقعی در fixture تست (نه کد اصلی) پیدا و رفع شد:** روی دستگاه واقعی
+۲ تست `pipeline::tests` شکست خوردند
+(`full_pipeline_succeeds_and_returns_apk_path` با خطای `UnrecognizedProject`،
+و `propagates_real_gradlew_failure` هم به‌صورت آبشاری از همان علت). علت:
+داخل `bimarz_env()`، مسیرهای `Cargo.toml`/`mobile-core/Cargo.toml`/
+`gradle-wrapper.properties` فقط به نقشه‌ی `files` (که `read_to_string` را
+تغذیه می‌کند) اضافه شده بودند، نه به `existing_paths` (که `path_exists` را
+تغذیه می‌کند) — روی فایل‌سیستم واقعی این دو خودکار هم‌راستایند، ولی توی
+Mock دو نقشه‌ی مستقل هستند که باید دستی هماهنگ شوند. رفع شد با افزودن هر
+سه مسیر به `existing_paths` هم. منتظر تست مجدد روی دستگاه.
 پروژه.

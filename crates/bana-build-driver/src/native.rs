@@ -62,7 +62,11 @@ pub fn build_native_layer(
         Some(out) if out.success => Ok(()),
         Some(out) => Err(NativeBuildError::BuildFailed {
             package: package.to_string(),
-            reason: if out.stderr.is_empty() { out.stdout } else { out.stderr },
+            reason: if out.stderr.is_empty() {
+                out.stdout
+            } else {
+                out.stderr
+            },
         }),
         None => Err(NativeBuildError::BuildFailed {
             package: package.to_string(),

@@ -80,10 +80,11 @@ pub fn install_bundled_tool(
     spec: &BundledToolSpec,
     recorder: &dyn InstallRecorder,
 ) -> Result<(), ToolchainError> {
-    let package = package_name_for(spec, backend.name()).ok_or(ToolchainError::NoPackageForBackend {
-        tool: spec.id,
-        backend: backend.name(),
-    })?;
+    let package =
+        package_name_for(spec, backend.name()).ok_or(ToolchainError::NoPackageForBackend {
+            tool: spec.id,
+            backend: backend.name(),
+        })?;
 
     let result = backend.install(runner, package);
 

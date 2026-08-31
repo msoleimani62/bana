@@ -52,7 +52,11 @@ pub fn generate_kotlin_bindings(
         Some(out) if out.success => Ok(()),
         Some(out) => Err(BindgenError::GenerationFailed {
             library: library_path.to_string_lossy().to_string(),
-            reason: if out.stderr.is_empty() { out.stdout } else { out.stderr },
+            reason: if out.stderr.is_empty() {
+                out.stdout
+            } else {
+                out.stderr
+            },
         }),
         None => Err(BindgenError::GenerationFailed {
             library: library_path.to_string_lossy().to_string(),
@@ -82,8 +86,7 @@ mod tests {
         }
 
         fn run_in(&self, _cwd: &Path, _program: &str, args: &[&str]) -> Option<CommandOutput> {
-            *self.last_call.lock().unwrap() =
-                Some(args.iter().map(|s| s.to_string()).collect());
+            *self.last_call.lock().unwrap() = Some(args.iter().map(|s| s.to_string()).collect());
             Some(CommandOutput {
                 stdout: String::new(),
                 stderr: if self.should_fail {

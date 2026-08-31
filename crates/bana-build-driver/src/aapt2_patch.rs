@@ -97,7 +97,10 @@ pub fn ensure_aapt2_override(
     // replaced with the correct one — not duplicated.
     let mut new_content: String = existing
         .lines()
-        .filter(|l| !l.trim_start().starts_with("android.aapt2FromMavenOverride="))
+        .filter(|l| {
+            !l.trim_start()
+                .starts_with("android.aapt2FromMavenOverride=")
+        })
         .collect::<Vec<_>>()
         .join("\n");
     if !new_content.is_empty() && !new_content.ends_with('\n') {

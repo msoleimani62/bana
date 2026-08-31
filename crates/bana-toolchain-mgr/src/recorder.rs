@@ -38,9 +38,11 @@ impl RealInstallRecorder {
 
 impl InstallRecorder for RealInstallRecorder {
     fn record(&self, record: &InstallRecord) -> Result<PathBuf, ToolchainError> {
-        std::fs::create_dir_all(&self.installs_dir).map_err(|e| ToolchainError::CacheUnavailable {
-            path: self.installs_dir.clone(),
-            reason: e.to_string(),
+        std::fs::create_dir_all(&self.installs_dir).map_err(|e| {
+            ToolchainError::CacheUnavailable {
+                path: self.installs_dir.clone(),
+                reason: e.to_string(),
+            }
         })?;
 
         let file_name = format!(
@@ -49,10 +51,11 @@ impl InstallRecorder for RealInstallRecorder {
         );
         let path = self.installs_dir.join(file_name);
 
-        let json = serde_json::to_string_pretty(record).map_err(|e| ToolchainError::CacheUnavailable {
-            path: path.clone(),
-            reason: e.to_string(),
-        })?;
+        let json =
+            serde_json::to_string_pretty(record).map_err(|e| ToolchainError::CacheUnavailable {
+                path: path.clone(),
+                reason: e.to_string(),
+            })?;
         std::fs::write(&path, json).map_err(|e| ToolchainError::CacheUnavailable {
             path: path.clone(),
             reason: e.to_string(),

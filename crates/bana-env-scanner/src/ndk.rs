@@ -15,7 +15,9 @@ use std::path::{Path, PathBuf};
 /// A `source.properties` only counts as a real NDK when it explicitly
 /// contains `Pkg.Desc = Android NDK` — not just any file with that name.
 fn parse_ndk_source_properties(content: &str) -> Option<String> {
-    let is_ndk = content.lines().any(|l| l.trim() == "Pkg.Desc = Android NDK");
+    let is_ndk = content
+        .lines()
+        .any(|l| l.trim() == "Pkg.Desc = Android NDK");
     if !is_ndk {
         return None;
     }
@@ -133,10 +135,9 @@ mod tests {
     #[test]
     fn detects_ndk_via_explicit_env_var() {
         let mut probe = MockProbe::default();
-        probe.env.insert(
-            "ANDROID_NDK_HOME".to_string(),
-            "/opt/my-ndk".to_string(),
-        );
+        probe
+            .env
+            .insert("ANDROID_NDK_HOME".to_string(), "/opt/my-ndk".to_string());
         probe.files.insert(
             PathBuf::from("/opt/my-ndk/source.properties"),
             REAL_NDK_PROPS.to_string(),

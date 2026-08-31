@@ -50,12 +50,22 @@ pub fn run_gradlew(
     match runner.run_in(gradle_project_root, "./gradlew", &[task, "--stacktrace"]) {
         Some(out) if out.success => Ok(()),
         Some(out) => {
-            let raw = if out.stderr.is_empty() { out.stdout } else { out.stderr };
+            let raw = if out.stderr.is_empty() {
+                out.stdout
+            } else {
+                out.stderr
+            };
             let friendly_reason = classify_gradle_error(&raw);
-            Err(GradleBuildError::BuildFailed { friendly_reason, raw_output: raw })
+            Err(GradleBuildError::BuildFailed {
+                friendly_reason,
+                raw_output: raw,
+            })
         }
         None => Err(GradleBuildError::GradlewMissing {
-            path: gradle_project_root.join("gradlew").to_string_lossy().to_string(),
+            path: gradle_project_root
+                .join("gradlew")
+                .to_string_lossy()
+                .to_string(),
         }),
     }
 }
@@ -74,7 +84,9 @@ fn classify_gradle_error(raw: &str) -> String {
                 one via `sdkmanager --install \"ndk;<version>\"`."
             .to_string();
     }
-    if lower.contains("no toolchains found") || lower.contains("unsupported class file major version") {
+    if lower.contains("no toolchains found")
+        || lower.contains("unsupported class file major version")
+    {
         return "This looks like a JDK version mismatch. Run `bana doctor` to check the \
                 detected JDK version against what this Gradle/AGP version expects."
             .to_string();
@@ -119,7 +131,12 @@ mod tests {
             stderr: "",
             success: true,
         };
-        assert!(run_gradlew(&runner, Path::new("/home/kali/bimarz/android"), BuildVariant::Debug).is_ok());
+        assert!(run_gradlew(
+            &runner,
+            Path::new("/home/kali/bimarz/android"),
+            BuildVariant::Debug
+        )
+        .is_ok());
     }
 
     #[test]
@@ -129,8 +146,15 @@ mod tests {
             stderr: "",
             success: false,
         };
-        let result = run_gradlew(&runner, Path::new("/home/kali/bimarz/android"), BuildVariant::Debug);
-        assert!(matches!(result, Err(GradleBuildError::GradlewMissing { .. })));
+        let result = run_gradlew(
+            &runner,
+            Path::new("/home/kali/bimarz/android"),
+            BuildVariant::Debug,
+        );
+        assert!(matches!(
+            result,
+            Err(GradleBuildError::GradlewMissing { .. })
+        ));
     }
 
     #[test]
@@ -140,8 +164,15 @@ mod tests {
             stderr: "NDK not configured. Download it using sdkmanager.",
             success: false,
         };
-        match run_gradlew(&runner, Path::new("/home/kali/bimarz/android"), BuildVariant::Debug) {
-            Err(GradleBuildError::BuildFailed { friendly_reason, raw_output }) => {
+        match run_gradlew(
+            &runner,
+            Path::new("/home/kali/bimarz/android"),
+            BuildVariant::Debug,
+        ) {
+            Err(GradleBuildError::BuildFailed {
+                friendly_reason,
+                raw_output,
+            }) => {
                 assert!(friendly_reason.contains("NDK"));
                 assert!(raw_output.contains("sdkmanager"));
             }
@@ -156,8 +187,15 @@ mod tests {
             stderr: "some totally novel error nobody has seen before",
             success: false,
         };
-        match run_gradlew(&runner, Path::new("/home/kali/bimarz/android"), BuildVariant::Debug) {
-            Err(GradleBuildError::BuildFailed { friendly_reason, raw_output }) => {
+        match run_gradlew(
+            &runner,
+            Path::new("/home/kali/bimarz/android"),
+            BuildVariant::Debug,
+        ) {
+            Err(GradleBuildError::BuildFailed {
+                friendly_reason,
+                raw_output,
+            }) => {
                 assert!(friendly_reason.contains("Gradle build failed"));
                 assert!(raw_output.contains("novel error"));
             }

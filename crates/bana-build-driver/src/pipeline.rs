@@ -78,7 +78,8 @@ pub fn build_hybrid_project(
 ) -> Result<PathBuf, PipelineError> {
     // ۱. تأیید سناریو — هرگز فرض نمی‌شود.
     // 1. Confirm the scenario — never assumed.
-    let fingerprint = analyze_project(probe, repo_root).ok_or(PipelineError::UnrecognizedProject)?;
+    let fingerprint =
+        analyze_project(probe, repo_root).ok_or(PipelineError::UnrecognizedProject)?;
     if fingerprint.scenario_id != "hybrid-rust-uniffi" {
         return Err(PipelineError::UnsupportedScenario {
             scenario_id: fingerprint.scenario_id,
@@ -110,7 +111,13 @@ pub fn build_hybrid_project(
     //    architecture-independent.
     let library_file_name = format!("lib{}.so", bindgen_package.replace('-', "_"));
     let library_path = jni_libs_out.join("arm64-v8a").join(&library_file_name);
-    generate_kotlin_bindings(runner, repo_root, &bindgen_package, &library_path, &kotlin_out)?;
+    generate_kotlin_bindings(
+        runner,
+        repo_root,
+        &bindgen_package,
+        &library_path,
+        &kotlin_out,
+    )?;
 
     // ۶. پچ AAPT2 در صورت نیاز (idempotent).
     // 6. AAPT2 patch if needed (idempotent).
@@ -245,12 +252,18 @@ mod tests {
         );
 
         let mut existing_paths = vec![
+            root.join("Cargo.toml"),
+            root.join("mobile-core").join("Cargo.toml"),
             root.join("android").join("settings.gradle.kts"),
             root.join("android").join("gradlew"),
             root.join("android")
                 .join("gradle")
                 .join("wrapper")
                 .join("gradle-wrapper.jar"),
+            root.join("android")
+                .join("gradle")
+                .join("wrapper")
+                .join("gradle-wrapper.properties"),
         ];
 
         let mut dirs = HashMap::new();

@@ -65,7 +65,13 @@ impl PackageBackend for AptBackend {
         runner.run("apt-get", &["--version"]).is_some()
     }
     fn install(&self, runner: &dyn CommandRunner, package: &str) -> Result<(), ToolchainError> {
-        run_install(runner, self.name(), "apt-get", &["install", "-y", package], package)
+        run_install(
+            runner,
+            self.name(),
+            "apt-get",
+            &["install", "-y", package],
+            package,
+        )
     }
 }
 
@@ -107,7 +113,13 @@ impl PackageBackend for YayBackend {
         runner.run("yay", &["--version"]).is_some()
     }
     fn install(&self, runner: &dyn CommandRunner, package: &str) -> Result<(), ToolchainError> {
-        run_install(runner, self.name(), "yay", &["-S", "--noconfirm", package], package)
+        run_install(
+            runner,
+            self.name(),
+            "yay",
+            &["-S", "--noconfirm", package],
+            package,
+        )
     }
 }
 
@@ -120,7 +132,13 @@ impl PackageBackend for TermuxPkgBackend {
         runner.run("pkg", &["--version"]).is_some()
     }
     fn install(&self, runner: &dyn CommandRunner, package: &str) -> Result<(), ToolchainError> {
-        run_install(runner, self.name(), "pkg", &["install", "-y", package], package)
+        run_install(
+            runner,
+            self.name(),
+            "pkg",
+            &["install", "-y", package],
+            package,
+        )
     }
 }
 
@@ -152,7 +170,13 @@ impl PackageBackend for ChocoBackend {
         runner.run("choco", &["--version"]).is_some()
     }
     fn install(&self, runner: &dyn CommandRunner, package: &str) -> Result<(), ToolchainError> {
-        run_install(runner, self.name(), "choco", &["install", "-y", package], package)
+        run_install(
+            runner,
+            self.name(),
+            "choco",
+            &["install", "-y", package],
+            package,
+        )
     }
 }
 

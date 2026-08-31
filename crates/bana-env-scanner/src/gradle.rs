@@ -20,14 +20,17 @@ fn parse_distribution_version(properties: &str) -> Option<String> {
     let line = properties
         .lines()
         .find(|l| l.trim_start().starts_with("distributionUrl"))?;
-    let url = line.splitn(2, '=').nth(1)?.trim();
+    let url = line.split_once('=')?.1.trim();
     let file_name = url.rsplit('/').next()?;
     let without_prefix = file_name.strip_prefix("gradle-")?;
     let version = without_prefix.split('-').next()?;
     Some(version.to_string())
 }
 
-pub fn detect_gradle_wrapper(probe: &dyn EnvProbe, project_root: &Path) -> ToolStatus<GradleWrapperInfo> {
+pub fn detect_gradle_wrapper(
+    probe: &dyn EnvProbe,
+    project_root: &Path,
+) -> ToolStatus<GradleWrapperInfo> {
     let gradlew_present = probe.path_exists(&project_root.join("gradlew"));
     let wrapper_jar_present = probe.path_exists(
         &project_root
@@ -126,7 +129,8 @@ mod tests {
         }
     }
 
-    const REAL_PROPS: &str = "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip\n";
+    const REAL_PROPS: &str =
+        "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip\n";
 
     #[test]
     fn detects_complete_wrapper() {

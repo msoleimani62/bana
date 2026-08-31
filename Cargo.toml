@@ -14,7 +14,7 @@ members = [
 # اطلاعات مشترک همه‌ی کریت‌های workspace، برای جلوگیری از پراکندگی نسخه
 # Shared metadata for every workspace crate, to avoid version drift
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/msoleimani62/bana"

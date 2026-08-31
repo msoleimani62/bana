@@ -54,9 +54,7 @@ fn scan_toolchain() -> PyResult<String> {
     let runtime = tokio::runtime::Runtime::new()
         .map_err(|e| PyRuntimeError::new_err(format!("failed to start async runtime: {e}")))?;
     let report = runtime.block_on(bana_env_scanner::scan_toolchain(
-        probe,
-        host.kind,
-        host.arch,
+        probe, host.kind, host.arch,
     ));
     serde_json::to_string(&report)
         .map_err(|e| PyRuntimeError::new_err(format!("toolchain scan serialize failed: {e}")))
@@ -91,7 +89,9 @@ fn scan_gradle_wrapper(project_root: String) -> PyResult<String> {
 /// tool's result is collected as a `SetupAction` and returned as JSON.
 #[pyfunction]
 fn setup_bundled_tools() -> PyResult<String> {
-    use bana_toolchain_mgr::{install_bundled_tool, select_backend, RealInstallRecorder, ANDROID_SDK, JDK};
+    use bana_toolchain_mgr::{
+        install_bundled_tool, select_backend, RealInstallRecorder, ANDROID_SDK, JDK,
+    };
     use bana_types::{SetupAction, ToolStatus};
 
     let probe: Arc<dyn bana_env_scanner::EnvProbe + Send + Sync> =
@@ -117,7 +117,11 @@ fn setup_bundled_tools() -> PyResult<String> {
                 let result = install_bundled_tool(&runner, backend.as_ref(), &JDK, &recorder);
                 actions.push(SetupAction {
                     tool_id: "jdk".to_string(),
-                    outcome: if result.is_ok() { "installed".to_string() } else { "failed".to_string() },
+                    outcome: if result.is_ok() {
+                        "installed".to_string()
+                    } else {
+                        "failed".to_string()
+                    },
                     detail: Some(match result {
                         Ok(()) => format!("via {}", backend.name()),
                         Err(e) => e.to_string(),
@@ -142,10 +146,15 @@ fn setup_bundled_tools() -> PyResult<String> {
         }),
         _ => match select_backend(&runner, &host.kind) {
             Ok(backend) => {
-                let result = install_bundled_tool(&runner, backend.as_ref(), &ANDROID_SDK, &recorder);
+                let result =
+                    install_bundled_tool(&runner, backend.as_ref(), &ANDROID_SDK, &recorder);
                 actions.push(SetupAction {
                     tool_id: "android_sdk".to_string(),
-                    outcome: if result.is_ok() { "installed".to_string() } else { "failed".to_string() },
+                    outcome: if result.is_ok() {
+                        "installed".to_string()
+                    } else {
+                        "failed".to_string()
+                    },
                     detail: Some(match result {
                         Ok(()) => format!("via {}", backend.name()),
                         Err(e) => e.to_string(),

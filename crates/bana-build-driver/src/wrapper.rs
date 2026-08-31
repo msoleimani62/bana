@@ -53,7 +53,11 @@ pub fn ensure_gradle_wrapper(
         Some(out) if out.success => {}
         Some(out) => {
             return Err(WrapperError::GenerationFailed {
-                reason: if out.stderr.is_empty() { out.stdout } else { out.stderr },
+                reason: if out.stderr.is_empty() {
+                    out.stdout
+                } else {
+                    out.stderr
+                },
             })
         }
         None => {
