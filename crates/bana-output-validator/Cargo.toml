@@ -1,12 +1,10 @@
 [package]
 name = "bana-output-validator"
-description = "Validates the final APK/AAB after a build: real native-lib architecture checks, signature verification, and basic manifest sanity — not just checking the file exists."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
-repository.workspace = true
-authors.workspace = true
+publish = false
+description = "Post-build APK health validation for bana — verifies the final artifact directly via its ZIP structure, deliberately never depending on aapt2."
 
 [dependencies]
-bana-types.workspace = true
-thiserror.workspace = true
+thiserror = "1.0"
+zip = { version = "0.6", default-features = false, features = ["deflate"] }

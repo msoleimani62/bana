@@ -236,6 +236,41 @@ mod tests {
     }
 
     #[test]
+    fn does_not_double_count_one_ndk_when_home_and_sdk_root_are_identical() {
+        // باگ واقعی، پیدا‌شده روی دستگاه واقعی: وقتی ANDROID_HOME و
+        // ANDROID_SDK_ROOT دقیقاً یک مقدار دارند، همان یک NDK واقعی
+        // نباید به‌اشتباه AmbiguousMultiple گزارش شود.
+        // Real bug, found on a real device: when ANDROID_HOME and
+        // ANDROID_SDK_ROOT hold the exact same value, the one real NDK
+        // must not be falsely reported as AmbiguousMultiple.
+        let mut probe = MockProbe::default();
+        probe.env.insert(
+            "ANDROID_HOME".to_string(),
+            "/home/kali/android-sdk".to_string(),
+        );
+        probe.env.insert(
+            "ANDROID_SDK_ROOT".to_string(),
+            "/home/kali/android-sdk".to_string(),
+        );
+        probe
+            .existing_paths
+            .push(PathBuf::from("/home/kali/android-sdk/ndk"));
+        probe.dirs.insert(
+            PathBuf::from("/home/kali/android-sdk/ndk"),
+            vec!["27.3.13750724".to_string()],
+        );
+        probe.files.insert(
+            PathBuf::from("/home/kali/android-sdk/ndk/27.3.13750724/source.properties"),
+            "Pkg.Desc = Android NDK\nPkg.Revision = 27.3.13750724\n".to_string(),
+        );
+
+        match detect_ndk(&probe, &HostKind::KaliNetHunterProot) {
+            ToolStatus::Found { info, .. } => assert_eq!(info.version, "27.3.13750724"),
+            other => panic!("expected Found, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn reports_not_found_when_nothing_present() {
         let probe = MockProbe::default();
         assert!(matches!(

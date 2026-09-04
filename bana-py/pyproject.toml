@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "bana"
-version = "0.1.1"
+version = "0.1.2"
 description = "Build Automation for Native Android — a single command that detects, sets up, and builds Android apps from inside Termux/Kali NetHunter without root."
 requires-python = ">=3.10"
 license = { text = "MIT" }

@@ -20,7 +20,7 @@
 use crate::aapt2_patch::{ensure_aapt2_override, Aapt2PatchError, PropertiesWriter};
 use crate::bindgen::{generate_kotlin_bindings, BindgenError};
 use crate::gradlew::{run_gradlew, BuildVariant, GradleBuildError};
-use crate::native::{build_native_layer, NativeBuildError, ALL_ABIS};
+use crate::native::{build_host_library, build_native_layer, NativeBuildError, ALL_ABIS};
 use crate::wrapper::{ensure_gradle_wrapper, WrapperError};
 use bana_env_scanner::{CommandRunner, EnvProbe};
 use bana_project_analyzer::{analyze_project, find_uniffi_bindgen_member};
@@ -104,18 +104,22 @@ pub fn build_hybrid_project(
     // 4. Native-layer build for all standard ABIs.
     build_native_layer(runner, repo_root, &bindgen_package, &jni_libs_out, ALL_ABIS)?;
 
-    // ۵. تولید Kotlin bindings — از روی یکی از فایل‌های .so تازه‌ساخته؛ هر
-    //    کدام کافی است چون متادیتای uniffi مستقل از معماری است.
-    // 5. Kotlin binding generation — from one of the freshly built .so
-    //    files; any of them works since uniffi's metadata is
-    //    architecture-independent.
-    let library_file_name = format!("lib{}.so", bindgen_package.replace('-', "_"));
-    let library_path = jni_libs_out.join("arm64-v8a").join(&library_file_name);
+    // ۵. تولید Kotlin bindings — طبق مستندات uniffi، library mode یک
+    //    `dlopen` واقعی روی همین هاست انجام می‌دهد، پس باید از یک build
+    //    هاست‌بومی (نه .so کراس‌کامپایل‌شده‌ی اندروید که با dlopen
+    //    لینوکسی اصلاً لود نمی‌شود) استفاده کند — باگ واقعی، روی دستگاه
+    //    واقعی پیدا و رفع شد.
+    // 5. Kotlin binding generation — per uniffi's own docs, library mode
+    //    does a real `dlopen` on this same host, so it must use a
+    //    host-native build (not the Android-cross-compiled .so, which a
+    //    Linux dlopen simply cannot load) — real bug, found and fixed on
+    //    a real device.
+    let host_library_path = build_host_library(runner, repo_root, &bindgen_package)?;
     generate_kotlin_bindings(
         runner,
         repo_root,
         &bindgen_package,
-        &library_path,
+        &host_library_path,
         &kotlin_out,
     )?;
 
@@ -170,6 +174,7 @@ mod tests {
         bytes: HashMap<PathBuf, Vec<u8>>,
         props: Mutex<HashMap<PathBuf, String>>,
         gradlew_success: bool,
+        calls: Mutex<Vec<Vec<String>>>,
     }
 
     impl EnvProbe for FakeEnv {
@@ -198,7 +203,12 @@ mod tests {
                 success: true,
             })
         }
-        fn run_in(&self, _cwd: &Path, program: &str, _args: &[&str]) -> Option<CommandOutput> {
+        fn run_in(&self, _cwd: &Path, program: &str, args: &[&str]) -> Option<CommandOutput> {
+            self.calls.lock().unwrap().push(
+                std::iter::once(program.to_string())
+                    .chain(args.iter().map(|a| a.to_string()))
+                    .collect(),
+            );
             if program == "./gradlew" {
                 return Some(CommandOutput {
                     stdout: String::new(),
@@ -283,6 +293,7 @@ mod tests {
             bytes,
             props: Mutex::new(HashMap::new()),
             gradlew_success,
+            calls: Mutex::new(Vec::new()),
         }
     }
 
@@ -317,6 +328,7 @@ mod tests {
             bytes: HashMap::new(),
             props: Mutex::new(HashMap::new()),
             gradlew_success: true,
+            calls: Mutex::new(Vec::new()),
         };
         let root = PathBuf::from("/home/kali/random-folder");
 
@@ -347,5 +359,57 @@ mod tests {
             BuildVariant::Debug,
         );
         assert!(matches!(result, Err(PipelineError::GradleBuild(_))));
+    }
+
+    #[test]
+    fn bindgen_receives_host_native_library_not_android_one() {
+        // باگ واقعی، پیدا‌شده روی دستگاه واقعی: قبل از این رفع، اینجا
+        // مسیر jniLibs/arm64-v8a (یک .so اندرویدی/Bionic) به bindgen
+        // داده می‌شد که با dlopen لینوکسی قابل‌لود نیست و uniffi-bindgen
+        // ساکت هیچ فایلی تولید نمی‌کرد.
+        // Real bug, found on a real device: before this fix, the
+        // jniLibs/arm64-v8a path (an Android/Bionic .so) was handed to
+        // bindgen, which a Linux dlopen cannot load, so uniffi-bindgen
+        // silently generated nothing.
+        let env = bimarz_env(true);
+        let root = PathBuf::from("/home/kali/bimarz");
+
+        build_hybrid_project(
+            &env,
+            &env,
+            &env,
+            &HostKind::KaliNetHunterProot,
+            &HostArch::Aarch64,
+            &root,
+            BuildVariant::Debug,
+        )
+        .unwrap();
+
+        let calls = env.calls.lock().unwrap();
+        let bindgen_call = calls
+            .iter()
+            .find(|c| c.contains(&"uniffi-bindgen".to_string()))
+            .expect("expected a uniffi-bindgen invocation");
+        let library_arg_index = bindgen_call
+            .iter()
+            .position(|a| a == "--library")
+            .expect("expected a --library flag");
+        let library_path = &bindgen_call[library_arg_index + 1];
+        assert!(
+            library_path.contains("target/debug/"),
+            "expected a host-native target/debug path (release profile corrupts uniffi metadata), got: {library_path}"
+        );
+        assert!(
+            !library_path.contains("jniLibs"),
+            "must not use the Android-cross-compiled jniLibs .so, got: {library_path}"
+        );
+
+        let host_build_call = calls.iter().find(|c| {
+            c.first().map(String::as_str) == Some("cargo") && c.get(1) == Some(&"build".to_string())
+        });
+        assert!(
+            host_build_call.is_some(),
+            "expected a plain `cargo build` (no cargo-ndk) call for the host library"
+        );
     }
 }

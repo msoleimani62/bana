@@ -51,6 +51,16 @@ pub(crate) fn candidate_paths(probe: &dyn EnvProbe, host_kind: &HostKind) -> Vec
         HostKind::Unknown => {}
     }
 
+    // اگر ANDROID_HOME و ANDROID_SDK_ROOT دقیقاً یک مسیر باشند (خیلی رایج
+    // است)، بدون این خط همان NDK/SDK واقعی دوبار شمرده می‌شد و نتیجه‌ی
+    // کاذب AmbiguousMultiple تولید می‌کرد؛ حذف تکراری‌ها با حفظ ترتیب.
+    // If ANDROID_HOME and ANDROID_SDK_ROOT are set to the exact same path
+    // (very common), without this the same real NDK/SDK got counted twice,
+    // producing a false AmbiguousMultiple result; dedupe while keeping
+    // first-seen order.
+    let mut seen = std::collections::HashSet::new();
+    candidates.retain(|p| seen.insert(p.clone()));
+
     candidates
 }
 
@@ -245,5 +255,29 @@ mod tests {
             ToolStatus::Found { path, .. } => assert_eq!(path, PathBuf::from("/custom/sdk")),
             other => panic!("expected Found, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn dedupes_when_android_home_and_sdk_root_are_identical() {
+        // باگ واقعی: وقتی ANDROID_HOME و ANDROID_SDK_ROOT دقیقاً یک مقدار
+        // دارند (خیلی رایج)، نباید همان مسیر دوبار در لیست بیاید.
+        // Real bug: when ANDROID_HOME and ANDROID_SDK_ROOT hold the exact
+        // same value (very common), the same path must not appear twice.
+        let mut probe = MockProbe::default();
+        probe.env.insert(
+            "ANDROID_HOME".to_string(),
+            "/home/kali/android-sdk".to_string(),
+        );
+        probe.env.insert(
+            "ANDROID_SDK_ROOT".to_string(),
+            "/home/kali/android-sdk".to_string(),
+        );
+
+        let paths = candidate_paths(&probe, &HostKind::KaliNetHunterProot);
+        let occurrences = paths
+            .iter()
+            .filter(|p| *p == &PathBuf::from("/home/kali/android-sdk"))
+            .count();
+        assert_eq!(occurrences, 1);
     }
 }

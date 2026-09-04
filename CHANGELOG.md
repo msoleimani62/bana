@@ -10,7 +10,42 @@ release time — per the Phase 10 checklist in AGENTS.md.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-02
+
 ### رفع شد / Fixed
+- **مایلستون: اولین APK واقعی موفق روی دستگاه واقعی.** `bana build`
+  (ترکیب با اجرای مستقیم `gradlew` برای دور زدن بازنویسی مکرر override
+  توسط bana) یک APK کامل (`app-debug.apk`, ~۱۵ مگابایت) از بی‌مرز،
+  سناریوی `hybrid-rust-uniffi`، روی Redmi Note 8 Pro (Kali NetHunter
+  proot، aarch64) تولید کرد. جزئیات کامل هر مشکل و رفعش در README.md
+  بخش «مشکلات شناخته‌شده و راه‌حل‌ها» مستند شده.
+  **Milestone: first successful real APK on a real device.** `bana
+  build` (combined with running `gradlew` directly to work around
+  bana's own repeated override rewrite) produced a complete APK
+  (`app-debug.apk`, ~15 MB) from bimarz, `hybrid-rust-uniffi`
+  scenario, on a Redmi Note 8 Pro (Kali NetHunter proot, aarch64).
+  Every problem and its fix is documented in full in README's
+  "Known Issues & Troubleshooting" section.
+
+### رفع شد / Fixed
+- باگ واقعی، پیدا‌شده روی دستگاه واقعی حین اولین اجرای `bana build`:
+  `crates/bana-env-scanner/src/sdk.rs::candidate_paths` مسیرهای
+  `ANDROID_HOME` و `ANDROID_SDK_ROOT` را بدون حذف تکراری اضافه
+  می‌کرد؛ وقتی این دو env var دقیقاً یک مقدار دارند (خیلی رایج)، همان
+  یک SDK/NDK واقعی دوبار شمرده می‌شد و `bana doctor` به‌اشتباه «۲
+  نسخه‌ی NDK پیدا شد» گزارش می‌داد با اینکه فقط یک NDK واقعی نصب بود.
+  با حذف تکراری‌های `candidates` (حفظ ترتیب اولین دیده‌شدن) رفع شد؛ ۲
+  تست رگرسیون جدید (یکی در `sdk.rs`، یکی در `ndk.rs`) دقیقاً همین
+  سناریوی واقعی را شبیه‌سازی می‌کنند.
+  Real bug, found on-device during the first `bana build` run:
+  `crates/bana-env-scanner/src/sdk.rs::candidate_paths` pushed
+  `ANDROID_HOME` and `ANDROID_SDK_ROOT` without deduplication; when
+  both env vars hold the exact same value (very common), the one real
+  SDK/NDK got counted twice, and `bana doctor` falsely reported "2 NDK
+  versions found" when only one was actually installed. Fixed by
+  deduping `candidates` (keeping first-seen order); 2 new regression
+  tests (one in `sdk.rs`, one in `ndk.rs`) reproduce this exact
+  real-world scenario.
 - باگ واقعی clippy، پیدا‌شده روی دستگاه واقعی بعد از ارتقای pyo3:
   `crates/bana-env-scanner/src/gradle.rs` از `line.splitn(2,
   '=').nth(1)?.trim()` استفاده می‌کرد که معادل دستی `split_once` است

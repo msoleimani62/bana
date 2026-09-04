@@ -6,7 +6,7 @@
 //! (`scripts/build-android.sh`).
 
 use bana_env_scanner::CommandRunner;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// چهار ABI استاندارد اندروید که پروژه‌ی Hybrid به‌طور پیش‌فرض برایشان
 /// build می‌شود، طبق تصمیم بند ۴ RULES.md (چهارگانه را اول سالم کنیم).
@@ -71,6 +71,66 @@ pub fn build_native_layer(
         None => Err(NativeBuildError::BuildFailed {
             package: package.to_string(),
             reason: "could not execute `cargo ndk`".to_string(),
+        }),
+    }
+}
+
+/// build ساده و هاست‌بومی (بدون cargo-ndk، بدون پروفایل release) — فقط
+/// برای `uniffi-bindgen`، نه برای توزیع در APK. دو دلیل جدا، هر دو روی
+/// دستگاه واقعی پیدا شدند:
+/// (۱) uniffi-bindgen در «library mode» با `dlopen` واقعیِ همین هاست
+///     کتابخانه را می‌خواند؛ یک `.so`ی کراس‌کامپایل‌شده برای
+///     اندروید/Bionic با `dlopen` لینوکسی/glibc اصلاً قابل‌لود نیست.
+/// (۲) حتی با یک `.so`ی هاست‌بومی درست، اگر با تنظیمات پروفایل
+///     release این پروژه (`lto = true`, `codegen-units = 1`,
+///     `strip = "symbols"`) ساخته شود، سکشن‌های متادیتای uniffi
+///     (`UNIFFI_META_*`) در حین LTO/بازآرایی خراب می‌شوند — سمبل‌ها در
+///     `nm -D` هنوز دیده می‌شوند، ولی `uniffi-bindgen print-repr`
+///     خروجی خالی `[]` می‌دهد. با پروفایل debug ساده (بدون این
+///     تنظیمات)، متادیتا کامل و سالم خوانده می‌شود؛ تأیید عملی روی
+///     دستگاه واقعی.
+/// A plain, host-native build (no cargo-ndk, no release profile) —
+/// for `uniffi-bindgen` only, never for shipping in the APK. Two
+/// separate causes, both found on a real device:
+/// (1) uniffi-bindgen in "library mode" does a real `dlopen` on this
+///     same host; an Android/Bionic cross-compiled `.so` simply
+///     cannot be loaded by a Linux/glibc `dlopen`.
+/// (2) even with a correct host-native `.so`, if built with this
+///     project's release profile settings (`lto = true`,
+///     `codegen-units = 1`, `strip = "symbols"`), uniffi's metadata
+///     sections (`UNIFFI_META_*`) get corrupted during
+///     LTO/reordering — the symbols still show up in `nm -D`, but
+///     `uniffi-bindgen print-repr` returns an empty `[]`. A plain
+///     debug profile (none of those settings) reads the metadata
+///     fully and correctly — confirmed live on a real device.
+pub fn build_host_library(
+    runner: &dyn CommandRunner,
+    workspace_root: &Path,
+    package: &str,
+) -> Result<PathBuf, NativeBuildError> {
+    let args = ["build", "-p", package];
+
+    match runner.run_in(workspace_root, "cargo", &args) {
+        Some(out) if out.success => {
+            let file_name = format!(
+                "{}{}.{}",
+                std::env::consts::DLL_PREFIX,
+                package.replace('-', "_"),
+                std::env::consts::DLL_EXTENSION
+            );
+            Ok(workspace_root.join("target").join("debug").join(file_name))
+        }
+        Some(out) => Err(NativeBuildError::BuildFailed {
+            package: package.to_string(),
+            reason: if out.stderr.is_empty() {
+                out.stdout
+            } else {
+                out.stderr
+            },
+        }),
+        None => Err(NativeBuildError::BuildFailed {
+            package: package.to_string(),
+            reason: "could not execute `cargo build` (host library)".to_string(),
         }),
     }
 }
@@ -215,6 +275,62 @@ mod tests {
             Path::new("/out"),
             &["arm64-v8a"],
         ) {
+            Err(NativeBuildError::BuildFailed { reason, .. }) => {
+                assert!(reason.contains("E0433"));
+            }
+            other => panic!("expected BuildFailed, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn host_library_uses_plain_debug_cargo_build_not_ndk() {
+        // دو باگ واقعی، هر دو روی دستگاه واقعی پیدا شدند:
+        // (۱) uniffi-bindgen به یک .so هاست‌بومی نیاز دارد (dlopen
+        //     واقعی می‌کند)، نه یک .so کراس‌کامپایل‌شده برای اندروید —
+        //     این تابع نباید هیچ‌وقت `cargo ndk` صدا بزند.
+        // (۲) این تابع نباید `--release` بزند — تنظیمات پروفایل
+        //     release این پروژه (lto, codegen-units=1, strip) سکشن‌های
+        //     متادیتای uniffi را خراب می‌کنند (تأیید عملی: print-repr
+        //     با release خروجی خالی می‌دهد، با debug کامل و درست).
+        // Two real bugs, both found on a real device:
+        // (1) uniffi-bindgen needs a host-native .so (it does a real
+        //     dlopen), not an Android-cross-compiled one — this
+        //     function must never call `cargo ndk`.
+        // (2) this function must never pass `--release` — this
+        //     project's release profile settings (lto,
+        //     codegen-units=1, strip) corrupt uniffi's metadata
+        //     sections (confirmed live: print-repr returns empty with
+        //     release, full and correct with debug).
+        let runner = MockRunner {
+            ndk_available: true,
+            build_should_fail: false,
+            last_call: Mutex::new(None),
+        };
+
+        let path =
+            build_host_library(&runner, Path::new("/home/kali/bimarz"), "mobile-core").unwrap();
+
+        let (program, args) = runner.last_call.lock().unwrap().clone().unwrap();
+        assert_eq!(program, "cargo");
+        assert_eq!(args, vec!["build", "-p", "mobile-core"]);
+        assert!(!args.contains(&"ndk".to_string()));
+        assert!(!args.contains(&"--release".to_string()));
+        assert!(path.ends_with(format!(
+            "target/debug/{}mobile_core.{}",
+            std::env::consts::DLL_PREFIX,
+            std::env::consts::DLL_EXTENSION
+        )));
+    }
+
+    #[test]
+    fn host_library_reports_failure_with_real_reason() {
+        let runner = MockRunner {
+            ndk_available: true,
+            build_should_fail: true,
+            last_call: Mutex::new(None),
+        };
+
+        match build_host_library(&runner, Path::new("/home/kali/bimarz"), "mobile-core") {
             Err(NativeBuildError::BuildFailed { reason, .. }) => {
                 assert!(reason.contains("E0433"));
             }
